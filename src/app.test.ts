@@ -101,7 +101,7 @@ function setUp(segments: number, from: 'top' | 'bottom', start: number, target: 
   choose('direction', from);
   setNumber('#startTempo', start);
   setNumber('#targetTempo', target);
-  setNumber('#step', 5);
+  setNumber('#rungs', 7); // 60, 67, 73, 79, 83, 87, 90 for a 60->90 range
   $<HTMLSelectElement>('#meter').value = '4/4';
   $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
 }
@@ -116,52 +116,54 @@ describe('the app', () => {
     vi.useRealTimers();
   });
 
-  it('follows the tempo range with a suggested step until you say otherwise', () => {
+  it('sizes the rung count to the tempo range until you say otherwise', () => {
     setNumber('#startTempo', 60);
     setNumber('#targetTempo', 90);
-    expect($<HTMLInputElement>('#step').value).toBe('2');
+    expect($<HTMLInputElement>('#rungs').value).toBe('7');
 
-    setNumber('#targetTempo', 240);
-    expect($<HTMLInputElement>('#step').value).toBe('10');
+    setNumber('#targetTempo', 120);
+    expect($<HTMLInputElement>('#rungs').value).toBe('13');
 
-    setNumber('#step', 4);
+    setNumber('#rungs', 5);
     setNumber('#targetTempo', 90);
-    expect($<HTMLInputElement>('#step').value).toBe('4');
-    expect($('#stepAuto').getAttribute('aria-pressed')).toBe('false');
+    expect($<HTMLInputElement>('#rungs').value).toBe('5');
+    expect($('#rungsAuto').getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('hands the step back to the tempo range when you tap Auto', () => {
+  it('hands the rung count back to the tempo range when you tap Auto', () => {
     setNumber('#startTempo', 60);
     setNumber('#targetTempo', 90);
-    setNumber('#step', 7);
-    expect($<HTMLInputElement>('#step').value).toBe('7');
+    setNumber('#rungs', 20);
+    expect($<HTMLInputElement>('#rungs').value).toBe('20');
 
-    click('#stepAuto');
-    expect($<HTMLInputElement>('#step').value).toBe('2');
-    expect($('#stepAuto').getAttribute('aria-pressed')).toBe('true');
+    click('#rungsAuto');
+    expect($<HTMLInputElement>('#rungs').value).toBe('7');
+    expect($('#rungsAuto').getAttribute('aria-pressed')).toBe('true');
 
-    setNumber('#targetTempo', 240);
-    expect($<HTMLInputElement>('#step').value).toBe('10');
+    setNumber('#targetTempo', 120);
+    expect($<HTMLInputElement>('#rungs').value).toBe('13');
   });
 
-  it('shows a manual step as manual after a reload, and can still recover it', async () => {
+  it('shows a manual rung count as manual after a reload, and can still recover it', async () => {
     setNumber('#startTempo', 60);
     setNumber('#targetTempo', 90);
-    setNumber('#step', 7);
+    setNumber('#rungs', 20);
 
     vi.resetModules();
     document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
     await import('./main');
 
-    expect($<HTMLInputElement>('#step').value).toBe('7');
-    expect($('#stepAuto').getAttribute('aria-pressed')).toBe('false');
-    click('#stepAuto');
-    expect($<HTMLInputElement>('#step').value).toBe('2');
+    expect($<HTMLInputElement>('#rungs').value).toBe('20');
+    expect($('#rungsAuto').getAttribute('aria-pressed')).toBe('false');
+    click('#rungsAuto');
+    expect($<HTMLInputElement>('#rungs').value).toBe('7');
   });
 
   it('previews the shape of the session before you commit to it', () => {
     setUp(4, 'top', 60, 90);
-    expect(text('#setupPreview')).toBe('4 stages · 7 rungs from 60 to 90 BPM in each.');
+    expect(text('#setupPreview')).toBe(
+      '4 stages · 7 rungs from 60 to 90 BPM in each, opening at +12% and easing to the target.',
+    );
     expect(text('#directionHint')).toContain('Start on bar 1');
   });
 
@@ -186,11 +188,11 @@ describe('the app', () => {
     expect(text('#nowTempo')).toBe('60');
     expect(ladder()).toEqual([
       '60 · bars 1–3',
-      '65 · bar 3',
-      '70 · bars 2–3',
-      '75 · bar 3',
-      '80 · bars 1–3',
-      '85 · bar 3',
+      '67 · bar 3',
+      '73 · bars 2–3',
+      '79 · bar 3',
+      '83 · bars 1–3',
+      '87 · bar 3',
       '90 · bars 2–3',
       '90 · bar 3',
       '90 · bars 1–3',
@@ -208,10 +210,10 @@ describe('the app', () => {
       click('#faster');
       seen.push(`${text('#nowTempo')} · ${text('#nowChunk')}`);
     }
-    expect(seen).toEqual(['65 · Play bar 3', '70 · Play bars 2–3', '75 · Play bar 3']);
+    expect(seen).toEqual(['67 · Play bar 3', '73 · Play bars 2–3', '79 · Play bar 3']);
 
     click('#slower');
-    expect(`${text('#nowTempo')} · ${text('#nowChunk')}`).toBe('70 · Play bars 2–3');
+    expect(`${text('#nowTempo')} · ${text('#nowChunk')}`).toBe('73 · Play bars 2–3');
     expect(text('#nowRung')).toBe('rung 3 of 9');
   });
 
@@ -220,7 +222,7 @@ describe('the app', () => {
     click('#begin');
     click('#faster');
     click('#faster');
-    expect(text('#nowTempo')).toBe('70');
+    expect(text('#nowTempo')).toBe('73');
     click('#nextStage');
     expect(text('#nowStage')).toBe('Stage 2 of 4');
     expect(text('#nowTempo')).toBe('60');
@@ -302,10 +304,10 @@ describe('the app', () => {
     // A new rung starts its own bar from the top, at the new tempo.
     clicks = [];
     click('#faster');
-    expect(text('#nowTempo')).toBe('65');
+    expect(text('#nowTempo')).toBe('67');
     runClock(2);
     expect(clicks[0]!.frequency).toBeCloseTo(1600 * (2 / 3), 5);
-    expect(clicks[1]!.at - clicks[0]!.at).toBeCloseTo(60 / 65, 5);
+    expect(clicks[1]!.at - clicks[0]!.at).toBeCloseTo(60 / 67, 5);
 
     click('#playPause');
     expect(text('#playPause')).toBe('Start');
@@ -377,7 +379,7 @@ describe('the app', () => {
 
     // Climb past ♩.=80 and they drop away, leaving the two dotted beats.
     for (let i = 0; i < 5; i++) click('#faster');
-    expect(text('#nowTempo')).toBe('85');
+    expect(text('#nowTempo')).toBe('87');
     expect($('#nowSubdivision').hidden).toBe(true);
     clicks = [];
     runClock(3);
@@ -404,7 +406,7 @@ describe('the app', () => {
     setUp(4, 'top', 60, 90);
     click('#begin');
     press('ArrowUp');
-    expect(text('#nowTempo')).toBe('65');
+    expect(text('#nowTempo')).toBe('67');
     press('ArrowDown');
     expect(text('#nowTempo')).toBe('60');
 

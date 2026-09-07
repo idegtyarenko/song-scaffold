@@ -24,22 +24,50 @@ export interface Rung {
 }
 
 /**
- * Tempos from `start` up to `target` in increments of `step`.
+ * How much bigger the first increment is than the last.
  *
- * A final increment that would overshoot is replaced by `target` itself, so the ladder
- * always ends exactly on the tempo the player asked for and never above it.
+ * Increments shrink as the tempo rises, because difficulty near a motor ceiling is
+ * asymptotic rather than proportional: 140→150 costs far more than 75→80 despite being the
+ * smaller percentage. Low down you are nowhere near the limit and can take long strides;
+ * the fine resolution belongs at the top, where the passage is actually fighting back.
  */
-export function tempoLadder(start: number, target: number, step: number): number[] {
-  if (step <= 0) throw new RangeError('step must be positive');
+const TAPER = 2.5;
+
+/**
+ * The largest opening jump Auto will propose, as a fraction of the start tempo.
+ *
+ * At the bottom of the ladder the difficulty is still learning the notes rather than
+ * playing them fast, so the first stride has to stay within reach even though the motor
+ * demand there is low.
+ */
+const MAX_FIRST_JUMP = 0.12;
+
+/**
+ * `rungs` tempos from `start` to `target`, in increments that shrink as they climb.
+ *
+ * Always starts exactly on `start` and ends exactly on `target`. Rounding can collide when
+ * the range is narrow and the rung count high, so repeated tempos are dropped rather than
+ * handed back as two rungs at the same speed.
+ */
+export function tempoLadder(start: number, target: number, rungs: number): number[] {
   if (target < start) throw new RangeError('target must not be below start');
+  if (target === start) return [start];
+
+  const steps = Math.max(1, Math.round(rungs) - 1);
+  const weights = Array.from({ length: steps }, (_, i) =>
+    steps === 1 ? 1 : TAPER - ((TAPER - 1) * i) / (steps - 1),
+  );
+  const scale = (target - start) / weights.reduce((a, b) => a + b, 0);
 
   const tempos = [start];
-  let t = start;
-  while (t < target) {
-    t = Math.min(t + step, target);
-    tempos.push(t);
+  let tempo = start;
+  for (const weight of weights) {
+    tempo += weight * scale;
+    tempos.push(Math.round(tempo));
   }
-  return tempos;
+  tempos[tempos.length - 1] = target;
+
+  return tempos.filter((t, i) => i === 0 || t > tempos[i - 1]!);
 }
 
 /**
@@ -114,17 +142,17 @@ export function buildStage(
   }));
 }
 
-const NICE_STEPS = [1, 2, 3, 4, 5, 6, 8, 10];
-
 /**
- * A sensible default increment: roughly fifteen rungs from start to target, rounded to a
- * value a musician would actually dial into a metronome.
+ * A sensible default rung count: the fewest that keep the opening jump inside
+ * `MAX_FIRST_JUMP`. Being relative to the range, it adapts on its own — a narrow range
+ * needs fewer rungs than a doubling to stay equally gentle.
  */
-export function suggestStep(start: number, target: number): number {
-  const ideal = (target - start) / 15;
-  return NICE_STEPS.reduce((best, candidate) =>
-    Math.abs(candidate - ideal) < Math.abs(best - ideal) ? candidate : best,
+export function suggestRungs(start: number, target: number): number {
+  if (target <= start) return 2;
+  const steps = Math.ceil(
+    (2 * TAPER * (target - start)) / ((TAPER + 1) * MAX_FIRST_JUMP * start),
   );
+  return Math.min(30, Math.max(2, steps + 1));
 }
 
 /** Human-readable name for a chunk, e.g. "bars 2–4" or "bar 3". */

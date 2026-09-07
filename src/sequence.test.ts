@@ -3,29 +3,48 @@ import {
   buildStage,
   describeChunk,
   rotationPattern,
-  suggestStep,
+  suggestRungs,
   tempoLadder,
   type Chunk,
 } from './sequence';
 
 describe('tempoLadder', () => {
-  it('climbs by the step when the range divides evenly', () => {
-    expect(tempoLadder(60, 80, 5)).toEqual([60, 65, 70, 75, 80]);
-  });
-
-  it('lands exactly on the target instead of overshooting', () => {
-    expect(tempoLadder(75, 150, 7)).toEqual([
-      75, 82, 89, 96, 103, 110, 117, 124, 131, 138, 145, 150,
+  it('opens with long strides and eases into the target', () => {
+    expect(tempoLadder(75, 150, 13)).toEqual([
+      75, 84, 92, 100, 108, 115, 121, 127, 133, 138, 142, 146, 150,
     ]);
   });
 
-  it('is a single rung when start and target are the same', () => {
-    expect(tempoLadder(90, 90, 5)).toEqual([90]);
+  it('shrinks every increment as the tempo rises', () => {
+    const tempos = tempoLadder(60, 200, 12);
+    const jumps = tempos.slice(1).map((t, i) => t - tempos[i]!);
+    for (let i = 1; i < jumps.length; i++) {
+      expect(jumps[i]!).toBeLessThanOrEqual(jumps[i - 1]!);
+    }
   });
 
-  it('rejects a target below the start, and a non-positive step', () => {
+  it('always begins on the start tempo and ends on the target', () => {
+    for (const rungs of [2, 3, 5, 8, 13, 30]) {
+      const tempos = tempoLadder(75, 150, rungs);
+      expect(tempos[0]).toBe(75);
+      expect(tempos[tempos.length - 1]).toBe(150);
+      expect(tempos).toHaveLength(rungs);
+    }
+  });
+
+  it('never repeats a tempo when the range is too narrow for the rungs asked for', () => {
+    const tempos = tempoLadder(100, 104, 20);
+    expect(tempos).toEqual([...new Set(tempos)]);
+    expect(tempos[0]).toBe(100);
+    expect(tempos[tempos.length - 1]).toBe(104);
+  });
+
+  it('is a single rung when start and target are the same', () => {
+    expect(tempoLadder(90, 90, 10)).toEqual([90]);
+  });
+
+  it('rejects a target below the start', () => {
     expect(() => tempoLadder(120, 100, 5)).toThrow(RangeError);
-    expect(() => tempoLadder(60, 100, 0)).toThrow(RangeError);
   });
 });
 
@@ -56,7 +75,8 @@ describe('rotationPattern', () => {
 });
 
 describe('buildStage', () => {
-  const ladder = tempoLadder(60, 90, 5); // 7 rungs
+  // An explicit ladder: these tests are about the rotation, not the tempo spacing.
+  const ladder = [60, 65, 70, 75, 80, 85, 90];
 
   it('advances chunk and tempo together, wrapping the rotation', () => {
     expect(buildStage(3, 4, ladder, false).slice(0, 7)).toEqual([
@@ -125,15 +145,22 @@ describe('buildStage', () => {
   });
 });
 
-describe('suggestStep', () => {
-  it('gives 5 for the common 75 → 150', () => {
-    expect(suggestStep(75, 150)).toBe(5);
+describe('suggestRungs', () => {
+  it('keeps the opening jump inside about a tenth of the start tempo', () => {
+    for (const [start, target] of [[75, 150], [60, 90], [120, 200], [40, 60]] as const) {
+      const tempos = tempoLadder(start, target, suggestRungs(start, target));
+      expect((tempos[1]! - tempos[0]!) / tempos[0]!).toBeLessThanOrEqual(0.125);
+    }
   });
 
-  it('scales with the range and stays a value you can dial in', () => {
-    expect(suggestStep(60, 90)).toBe(2);
-    expect(suggestStep(60, 240)).toBe(10);
-    expect(suggestStep(100, 104)).toBe(1);
+  it('needs fewer rungs for a narrow range than for a doubling', () => {
+    expect(suggestRungs(75, 150)).toBe(13);
+    expect(suggestRungs(60, 90)).toBe(7);
+    expect(suggestRungs(100, 104)).toBe(2);
+  });
+
+  it('stays inside a workable count even for an extreme range', () => {
+    expect(suggestRungs(40, 240)).toBeLessThanOrEqual(30);
   });
 });
 

@@ -28,8 +28,8 @@ const fields = {
   totalSegments: el<HTMLInputElement>('totalSegments'),
   startTempo: el<HTMLInputElement>('startTempo'),
   targetTempo: el<HTMLInputElement>('targetTempo'),
-  step: el<HTMLInputElement>('step'),
-  stepAuto: el<HTMLButtonElement>('stepAuto'),
+  rungs: el<HTMLInputElement>('rungs'),
+  rungsAuto: el<HTMLButtonElement>('rungsAuto'),
   meter: el<HTMLSelectElement>('meter'),
   countIn: el<HTMLInputElement>('countIn'),
 };
@@ -49,7 +49,7 @@ const view = {
   ladderPanel: el<HTMLDetailsElement>('ladderPanel'),
   fasterSub: el('fasterSub'),
   slowerSub: el('slowerSub'),
-  stepHint: el('stepHint'),
+  rungsHint: el('rungsHint'),
   directionHint: el('directionHint'),
   setupPreview: el('setupPreview'),
   meterHint: el('meterHint'),
@@ -85,27 +85,29 @@ function writeSetupForm(): void {
   fields.totalSegments.value = String(settings.totalSegments);
   fields.startTempo.value = String(settings.startTempo);
   fields.targetTempo.value = String(settings.targetTempo);
-  fields.step.value = String(settings.step);
+  fields.rungs.value = String(settings.rungs);
   fields.meter.value = settings.meterId;
   fields.countIn.checked = settings.countInBars > 0;
   check(directionRadios, settings.backwards ? 'bottom' : 'top');
 
   view.directionHint.textContent = directionHint();
   view.meterHint.textContent = meterHint();
-  writeStepHint();
+  writeRungsHint();
 }
 
-function writeStepHint(): void {
-  fields.stepAuto.setAttribute('aria-pressed', String(settings.stepIsAutomatic));
-  fields.stepAuto.classList.toggle('is-on', settings.stepIsAutomatic);
-  view.stepHint.textContent = settings.stepIsAutomatic
-    ? `BPM per rung, following the ${settings.startTempo}→${settings.targetTempo} range`
-    : 'BPM per rung · tap Auto to follow the tempo range again';
+function writeRungsHint(): void {
+  fields.rungsAuto.setAttribute('aria-pressed', String(settings.rungsIsAutomatic));
+  fields.rungsAuto.classList.toggle('is-on', settings.rungsIsAutomatic);
+  view.rungsHint.textContent = settings.rungsIsAutomatic
+    ? `Notches to the target, sized for the ${settings.startTempo}→${settings.targetTempo} range`
+    : 'Notches to the target · tap Auto to size them for the range again';
 
-  const rungs = tempoLadder(settings.startTempo, settings.targetTempo, settings.step).length;
+  const ladder = tempoLadder(settings.startTempo, settings.targetTempo, settings.rungs);
+  const firstJump = ladder.length > 1 ? (ladder[1]! - ladder[0]!) / ladder[0]! : 0;
   view.setupPreview.textContent =
-    `${settings.totalSegments} stages · ${rungs} rungs from ` +
-    `${settings.startTempo} to ${settings.targetTempo} BPM in each.`;
+    `${settings.totalSegments} stages · ${ladder.length} rungs from ` +
+    `${settings.startTempo} to ${settings.targetTempo} BPM in each, ` +
+    `opening at +${Math.round(firstJump * 100)}% and easing to the target.`;
 }
 
 function readSetupForm(): void {
@@ -114,7 +116,7 @@ function readSetupForm(): void {
     totalSegments: number(fields.totalSegments, DEFAULT_SETTINGS.totalSegments),
     startTempo: number(fields.startTempo, DEFAULT_SETTINGS.startTempo),
     targetTempo: number(fields.targetTempo, DEFAULT_SETTINGS.targetTempo),
-    step: number(fields.step, DEFAULT_SETTINGS.step),
+    rungs: number(fields.rungs, DEFAULT_SETTINGS.rungs),
     backwards: selected(directionRadios) === 'bottom',
     meterId: fields.meter.value,
     countInBars: fields.countIn.checked ? 1 : 0,
@@ -125,30 +127,30 @@ function readSetupForm(): void {
 for (const input of [fields.totalSegments, fields.startTempo, fields.targetTempo]) {
   input.addEventListener('input', () => {
     readSetupForm();
-    if (settings.stepIsAutomatic) fields.step.value = String(settings.step);
-    writeStepHint();
+    if (settings.rungsIsAutomatic) fields.rungs.value = String(settings.rungs);
+    writeRungsHint();
     view.directionHint.textContent = directionHint();
   });
   input.addEventListener('blur', writeSetupForm);
 }
 
-// Typing a step takes it off the automatic suggestion; the Auto button is the way back —
+// Typing a rung count takes it off the automatic suggestion; Auto is the way back —
 // and it stays on screen, unlike the old "clear the box" trick, which nobody would find
 // once a stale preference had been persisted. The field is left alone while it has focus,
 // so a half-typed number is not clamped out from under the cursor.
-fields.step.addEventListener('input', () => {
-  settings.stepIsAutomatic = false;
+fields.rungs.addEventListener('input', () => {
+  settings.rungsIsAutomatic = false;
   readSetupForm();
-  writeStepHint();
+  writeRungsHint();
 });
 
-fields.step.addEventListener('blur', writeSetupForm);
+fields.rungs.addEventListener('blur', writeSetupForm);
 
-fields.stepAuto.addEventListener('click', () => {
-  settings.stepIsAutomatic = true;
+fields.rungsAuto.addEventListener('click', () => {
+  settings.rungsIsAutomatic = true;
   readSetupForm();
-  fields.step.value = String(settings.step);
-  writeStepHint();
+  fields.rungs.value = String(settings.rungs);
+  writeRungsHint();
 });
 
 for (const input of [
@@ -175,7 +177,7 @@ function startSession(): void {
     backwards: settings.backwards,
     startTempo: settings.startTempo,
     targetTempo: settings.targetTempo,
-    step: settings.step,
+    rungs: settings.rungs,
   });
 
   metronome = new Metronome(clickConfig(session.state().rung.tempo), showBeat);
@@ -401,6 +403,7 @@ function directionHint(): string {
 }
 
 fields.totalSegments.max = String(LIMITS.totalSegments.max);
+fields.rungs.max = String(LIMITS.rungs.max);
 writeSetupForm();
 
 // --- Small DOM helpers ----------------------------------------------------

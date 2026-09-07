@@ -12,7 +12,7 @@ export interface SessionSettings {
   backwards: boolean;
   startTempo: number;
   targetTempo: number;
-  step: number;
+  rungs: number;
 }
 
 export interface SessionState {
@@ -38,7 +38,7 @@ export class Session {
 
   constructor(settings: SessionSettings) {
     this.settings = settings;
-    this.tempos = tempoLadder(settings.startTempo, settings.targetTempo, settings.step);
+    this.tempos = tempoLadder(settings.startTempo, settings.targetTempo, settings.rungs);
     this.stage = 1;
     this.ladder = this.buildLadder(1);
   }

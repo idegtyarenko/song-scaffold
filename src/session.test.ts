@@ -6,7 +6,7 @@ const SETTINGS: SessionSettings = {
   backwards: false,
   startTempo: 60,
   targetTempo: 90,
-  step: 5,
+  rungs: 7, // 60, 67, 73, 79, 83, 87, 90
 };
 
 describe('Session', () => {
@@ -27,9 +27,9 @@ describe('Session', () => {
     session.nextStage();
     session.nextStage(); // stage 3
     session.goFaster();
-    expect(session.state().rung).toEqual({ tempo: 65, chunk: [3], isTail: false });
+    expect(session.state().rung).toEqual({ tempo: 67, chunk: [3], isTail: false });
     session.goFaster();
-    expect(session.state().rung).toEqual({ tempo: 70, chunk: [2, 3], isTail: false });
+    expect(session.state().rung).toEqual({ tempo: 73, chunk: [2, 3], isTail: false });
   });
 
   it('undoes a rung exactly on goSlower', () => {

@@ -1,16 +1,17 @@
 /** Setup form values: defaults, validation and persistence. */
 
 import { DEFAULT_METER_ID, findMeter } from './meter';
-import { suggestStep } from './sequence';
+import { suggestRungs } from './sequence';
 
 export interface Settings {
   totalSegments: number;
   backwards: boolean;
   startTempo: number;
   targetTempo: number;
-  step: number;
-  /** True while `step` should keep following `suggestStep` as the tempos change. */
-  stepIsAutomatic: boolean;
+  /** Notches from the start tempo to the target. */
+  rungs: number;
+  /** True while `rungs` should keep following `suggestRungs` as the tempos change. */
+  rungsIsAutomatic: boolean;
   meterId: string;
   countInBars: number;
 }
@@ -18,7 +19,7 @@ export interface Settings {
 export const LIMITS = {
   totalSegments: { min: 1, max: 15 },
   tempo: { min: 20, max: 300 },
-  step: { min: 1, max: 50 },
+  rungs: { min: 2, max: 30 },
 } as const;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -26,8 +27,8 @@ export const DEFAULT_SETTINGS: Settings = {
   backwards: false,
   startTempo: 75,
   targetTempo: 150,
-  step: suggestStep(75, 150),
-  stepIsAutomatic: true,
+  rungs: suggestRungs(75, 150),
+  rungsIsAutomatic: true,
   meterId: DEFAULT_METER_ID,
   countInBars: 1,
 };
@@ -42,9 +43,9 @@ export function normalize(settings: Settings): Settings {
     LIMITS.tempo.min,
     LIMITS.tempo.max,
   );
-  const step = settings.stepIsAutomatic
-    ? suggestStep(startTempo, targetTempo)
-    : clamp(settings.step, LIMITS.step.min, LIMITS.step.max);
+  const rungs = settings.rungsIsAutomatic
+    ? suggestRungs(startTempo, targetTempo)
+    : clamp(settings.rungs, LIMITS.rungs.min, LIMITS.rungs.max);
 
   return {
     ...settings,
@@ -55,7 +56,7 @@ export function normalize(settings: Settings): Settings {
     ),
     startTempo,
     targetTempo,
-    step,
+    rungs,
     meterId: findMeter(settings.meterId).id,
     countInBars: clamp(settings.countInBars, 0, 2),
   };

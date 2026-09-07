@@ -35,6 +35,28 @@ Two more rules:
 Building **from the bottom** mirrors the whole thing: stage 1 is the last segment, and each
 stage prepends the one before it, so every run heads forward into music you already know.
 
+## The tempo ladder
+
+Increments **shrink as the tempo rises**. Difficulty near a motor ceiling is asymptotic
+rather than proportional — 140→150 costs far more than 75→80 despite being the smaller
+percentage — so equal jumps in either BPM or percent put the coarse resolution exactly where
+the passage fights hardest. Low down you are nowhere near the limit and can take long
+strides.
+
+```
+75 → 150 in 13 rungs:   75  84  92 100 108 115 121 127 133 138 142 146 150
+                       +12% +10% +9% +8% +6% +5% +5% +5% +4% +3% +3% +3%
+```
+
+You set the number of rungs, not a BPM step. **Auto** picks the fewest that keep the opening
+jump within about a tenth of the start tempo — at the bottom of the ladder the difficulty is
+still learning the notes rather than playing them fast, so the first stride has to stay
+within reach. Being relative to the range, it adapts on its own: a doubling needs 13 rungs,
+60→90 needs 7.
+
+Both constants live at the top of `src/sequence.ts` — `TAPER` (how much bigger the first
+increment is than the last, 2.5) and `MAX_FIRST_JUMP` (0.12).
+
 ## Time signatures
 
 The tempo you type is always the BPM of the pulse — ♩ in 4/4, 𝅗𝅥 in 2/2, ♩. in 6/8, 9/8 and
