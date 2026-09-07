@@ -215,6 +215,18 @@ describe('the app', () => {
     }
   });
 
+  it('explains where the ladder departs from Gebrian’s instructions, without taking up room', () => {
+    const note = $<HTMLDetailsElement>('#taperNote');
+    expect(note.open).toBe(false);
+    const summary = note.querySelector('.note__summary')!.textContent!;
+    const body = note.querySelector('.note__body')!.textContent!.replace(/\s+/g, ' ');
+    // It must name the difference and give the reason, not just assert the difference.
+    expect(summary).toContain('5 BPM');
+    expect(body).toContain('by 5s');
+    expect(body).toContain('140');
+    expect(body).toMatch(/asymptotic|top speed/);
+  });
+
   it('previews the shape of the session before you commit to it', () => {
     setUp(4, 'top', 60, 90);
     expect(text('#setupPreview')).toBe(
