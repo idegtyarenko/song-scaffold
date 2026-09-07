@@ -413,9 +413,9 @@ function meterHint(): string {
 
 function directionHint(): string {
   return settings.backwards
-    ? `Start on bar ${settings.totalSegments} and add the bar before it each stage — ` +
+    ? `Start on segment ${settings.totalSegments} and add the segment before it each stage — ` +
         'backward chaining, so you always end up in music you already know.'
-    : 'Start on bar 1 and add the next bar each stage.';
+    : 'Start on segment 1 and add the next segment each stage.';
 }
 
 fields.totalSegments.max = String(LIMITS.totalSegments.max);

@@ -129,7 +129,7 @@ function choose(name: string, value: string): void {
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-/** The visible ladder, as `["60 · bars 1–3", ...]`. */
+/** The visible ladder, as `["60 · segments 1–3", ...]`. */
 function ladder(): string[] {
   return [...document.querySelectorAll('#ladderBody tr')].map((row) => {
     const cells = [...row.querySelectorAll('td')].map((cell) => cell.textContent);
@@ -206,14 +206,14 @@ describe('the app', () => {
     expect(text('#setupPreview')).toBe(
       '4 stages · 7 steps from 60 to 90 BPM in each, opening at +12% and easing to the target.',
     );
-    expect(text('#directionHint')).toContain('Start on bar 1');
+    expect(text('#directionHint')).toContain('Start on segment 1');
   });
 
   it('opens the session on the first segment at the start tempo', () => {
     setUp(4, 'top', 60, 90);
     click('#begin');
     expect($('#session').hidden).toBe(false);
-    expect(text('#nowChunk')).toBe('Play bar 1');
+    expect(text('#nowChunk')).toBe('Play segment 1');
     expect(text('#nowTempo')).toBe('60');
     expect(text('#nowStage')).toBe('Stage 1 of 4');
     expect(text('#nowRung')).toBe('step 1 of 7');
@@ -226,18 +226,18 @@ describe('the app', () => {
     click('#nextStage');
 
     expect(text('#nowStage')).toBe('Stage 3 of 4');
-    expect(text('#nowChunk')).toBe('Play bars 1–3');
+    expect(text('#nowChunk')).toBe('Play segments 1–3');
     expect(text('#nowTempo')).toBe('60');
     expect(ladder()).toEqual([
-      '60 · bars 1–3',
-      '67 · bar 3',
-      '73 · bars 2–3',
-      '79 · bar 3',
-      '83 · bars 1–3',
-      '87 · bar 3',
-      '90 · bars 2–3',
-      '90 · bar 3',
-      '90 · bars 1–3',
+      '60 · segments 1–3',
+      '67 · segment 3',
+      '73 · segments 2–3',
+      '79 · segment 3',
+      '83 · segments 1–3',
+      '87 · segment 3',
+      '90 · segments 2–3',
+      '90 · segment 3',
+      '90 · segments 1–3',
     ]);
   });
 
@@ -252,10 +252,10 @@ describe('the app', () => {
       click('#faster');
       seen.push(`${text('#nowTempo')} · ${text('#nowChunk')}`);
     }
-    expect(seen).toEqual(['67 · Play bar 3', '73 · Play bars 2–3', '79 · Play bar 3']);
+    expect(seen).toEqual(['67 · Play segment 3', '73 · Play segments 2–3', '79 · Play segment 3']);
 
     click('#slower');
-    expect(`${text('#nowTempo')} · ${text('#nowChunk')}`).toBe('73 · Play bars 2–3');
+    expect(`${text('#nowTempo')} · ${text('#nowChunk')}`).toBe('73 · Play segments 2–3');
     expect(text('#nowRung')).toBe('step 3 of 9');
   });
 
@@ -268,7 +268,7 @@ describe('the app', () => {
     click('#nextStage');
     expect(text('#nowStage')).toBe('Stage 2 of 4');
     expect(text('#nowTempo')).toBe('60');
-    expect(text('#nowChunk')).toBe('Play bars 1–2');
+    expect(text('#nowChunk')).toBe('Play segments 1–2');
   });
 
   it('badges the rungs that run on at the target tempo', () => {
@@ -281,7 +281,7 @@ describe('the app', () => {
     expect(text('#nowTempo')).toBe('90');
 
     click('#faster');
-    expect(text('#nowChunk')).toBe('Play bars 1–3');
+    expect(text('#nowChunk')).toBe('Play segments 1–3');
     expect($<HTMLButtonElement>('#faster').disabled).toBe(true);
     expect($<HTMLButtonElement>('#nextStage').classList.contains('is-suggested')).toBe(true);
   });
@@ -299,12 +299,12 @@ describe('the app', () => {
   it('builds from the bottom of the passage when asked', () => {
     setUp(4, 'bottom', 60, 90);
     click('#begin');
-    expect(text('#nowChunk')).toBe('Play bar 4');
+    expect(text('#nowChunk')).toBe('Play segment 4');
 
     click('#nextStage');
-    expect(text('#nowChunk')).toBe('Play bars 3–4');
+    expect(text('#nowChunk')).toBe('Play segments 3–4');
     click('#faster');
-    expect(text('#nowChunk')).toBe('Play bar 3');
+    expect(text('#nowChunk')).toBe('Play segment 3');
   });
 
   it('marks which segments are in the stage and which are sounding', () => {

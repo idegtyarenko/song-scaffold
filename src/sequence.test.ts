@@ -116,8 +116,8 @@ describe('buildStage', () => {
   });
 
   it('works backwards from the end of the piece', () => {
-    // 7 segments, stage 3: bars 5-7 are in play and bar 5 is the newly added one, so the
-    // runs grow forward out of it.
+    // 7 segments, stage 3: segments 5-7 are in play and segment 5 is the newly added one,
+    // so the runs grow forward out of it.
     const rungs = buildStage(3, 7, ladder, true);
     expect(rungs.slice(0, 4).map((r) => r.chunk)).toEqual([
       [5, 6, 7], [5], [5, 6], [5],
@@ -165,9 +165,9 @@ describe('suggestRungs', () => {
 });
 
 describe('describeChunk', () => {
-  it('names one bar and a run of bars differently', () => {
-    expect(describeChunk([3])).toBe('bar 3');
-    expect(describeChunk([2, 3, 4])).toBe('bars 2–4');
+  it('names one segment and a run of segments differently', () => {
+    expect(describeChunk([3])).toBe('segment 3');
+    expect(describeChunk([2, 3, 4])).toBe('segments 2–4');
   });
 });
 

@@ -6,7 +6,10 @@ Neuroscience of Practicing* (Oxford University Press, 2024), ch. 16.
 
 ## The method
 
-Split the passage into bars. Then build it up one bar at a time.
+Split the passage into segments — bars, or short phrases. Then build it up one segment at a
+time. The app numbers them and tells you which to play; it counts one bar of the time
+signature per segment, so multi-bar segments will still advance the current-segment marker
+once a bar.
 
 A **stage** is however many segments are in play. Within a stage you rotate through a fixed
 pattern of overlapping chunks, and the metronome goes up one notch on every repetition:

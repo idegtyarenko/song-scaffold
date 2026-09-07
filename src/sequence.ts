@@ -155,11 +155,11 @@ export function suggestRungs(start: number, target: number): number {
   return Math.min(30, Math.max(2, steps + 1));
 }
 
-/** Human-readable name for a chunk, e.g. "bars 2–4" or "bar 3". */
+/** Human-readable name for a chunk, e.g. "segments 2–4" or "segment 3". */
 export function describeChunk(chunk: Chunk): string {
   const first = chunk[0]!;
   const last = chunk[chunk.length - 1]!;
-  return first === last ? `bar ${first}` : `bars ${first}–${last}`;
+  return first === last ? `segment ${first}` : `segments ${first}–${last}`;
 }
 
 function range(from: number, to: number): number[] {
