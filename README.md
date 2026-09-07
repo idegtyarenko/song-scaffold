@@ -93,7 +93,8 @@ folding away underneath it.
 | `src/settings.ts` | setup defaults, clamping, `localStorage`. |
 | `src/main.ts` | DOM wiring. |
 
-Tests: `sequence.test.ts` and `session.test.ts` pin the method itself; `app.test.ts` drives the
+Tests: `sequence.test.ts` and `session.test.ts` pin the method itself; `metronome.test.ts`
+drives the scheduler against a fake audio clock; `app.test.ts` drives the
 real page through the real `main.ts` under jsdom, with a stub `AudioContext`, so the form, the
 four transport buttons, the ladder, the beat display and the click scheduling are all exercised
 as they run. Only whether it *sounds* right needs your ears.

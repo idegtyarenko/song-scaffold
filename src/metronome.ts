@@ -158,11 +158,25 @@ export class Metronome {
     };
   }
 
-  /** Report beats to the UI as they actually sound, not as they were scheduled. */
+  /**
+   * Report beats to the UI as they actually sound, not as they were scheduled.
+   *
+   * A throw out of `onBeat` is reported and then dropped: this loop is the only thing
+   * driving the beat display, so letting one bad beat escape would freeze the display for
+   * the rest of the session while the click carried on playing. Logging keeps the failure
+   * visible rather than swallowing it.
+   *
+   * Animation frames stop in a hidden tab, which is what we want — there is no dot to
+   * update — and the backlog flushes in one pass when the tab comes back.
+   */
   private flushPending(): void {
     const now = this.context?.currentTime ?? 0;
     while (this.pending.length > 0 && this.pending[0]!.time <= now) {
-      this.onBeat(this.pending.shift()!.beat);
+      try {
+        this.onBeat(this.pending.shift()!.beat);
+      } catch (error) {
+        console.error('beat listener failed', error);
+      }
     }
     this.frame = requestAnimationFrame(() => this.flushPending());
   }
