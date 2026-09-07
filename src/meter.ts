@@ -1,53 +1,69 @@
-/** Time signatures, and how their beats are accented. */
+/** Time signatures: their pulse, their accents, and when eighths are worth clicking. */
 
 export interface Meter {
   id: string;
   label: string;
-  /** Clicks per bar. */
+  /** Pulses per bar — what you actually count. */
   beatsPerBar: number;
-  /** 0-based beats carrying a secondary accent. Beat 0 always carries the main accent. */
+  /** 0-based pulses carrying a secondary accent. Pulse 0 always carries the main accent. */
   secondaryAccents: number[];
-  /** What one click is worth, for the tempo label. */
+  /** What one pulse is worth. The tempo is always this note's BPM. */
   beatName: string;
-  /** For 6/8, 9/8 and 12/8: the same bar counted in dotted beats. */
-  compound?: Omit<Meter, 'id' | 'compound'>;
+  /** Clicks per pulse available as rhythmic support. 1 means the pulse is all there is. */
+  subdivision: number;
+  /** What one subdivision click is worth, when there are any. */
+  subdivisionName?: string;
 }
 
 export const METERS: Meter[] = [
-  { id: '2/4', label: '2/4', beatsPerBar: 2, secondaryAccents: [], beatName: '♩' },
-  { id: '3/4', label: '3/4', beatsPerBar: 3, secondaryAccents: [], beatName: '♩' },
-  { id: '4/4', label: '4/4', beatsPerBar: 4, secondaryAccents: [2], beatName: '♩' },
-  { id: '5/4', label: '5/4', beatsPerBar: 5, secondaryAccents: [3], beatName: '♩' },
-  { id: '2/2', label: '2/2', beatsPerBar: 2, secondaryAccents: [], beatName: '𝅗𝅥' },
-  { id: '3/2', label: '3/2', beatsPerBar: 3, secondaryAccents: [], beatName: '𝅗𝅥' },
-  { id: '3/8', label: '3/8', beatsPerBar: 3, secondaryAccents: [], beatName: '♪' },
-  { id: '7/8', label: '7/8', beatsPerBar: 7, secondaryAccents: [2, 4], beatName: '♪' },
+  { id: '2/4', label: '2/4', beatsPerBar: 2, secondaryAccents: [], beatName: '♩', subdivision: 1 },
+  { id: '3/4', label: '3/4', beatsPerBar: 3, secondaryAccents: [], beatName: '♩', subdivision: 1 },
+  { id: '4/4', label: '4/4', beatsPerBar: 4, secondaryAccents: [2], beatName: '♩', subdivision: 1 },
+  { id: '5/4', label: '5/4', beatsPerBar: 5, secondaryAccents: [3], beatName: '♩', subdivision: 1 },
+  { id: '2/2', label: '2/2', beatsPerBar: 2, secondaryAccents: [], beatName: '𝅗𝅥', subdivision: 1 },
+  { id: '3/2', label: '3/2', beatsPerBar: 3, secondaryAccents: [], beatName: '𝅗𝅥', subdivision: 1 },
+  { id: '3/8', label: '3/8', beatsPerBar: 3, secondaryAccents: [], beatName: '♪', subdivision: 1 },
+  { id: '7/8', label: '7/8', beatsPerBar: 7, secondaryAccents: [2, 4], beatName: '♪', subdivision: 1 },
   {
-    id: '6/8', label: '6/8', beatsPerBar: 6, secondaryAccents: [3], beatName: '♪',
-    compound: { label: '6/8', beatsPerBar: 2, secondaryAccents: [], beatName: '♩.' },
+    id: '6/8', label: '6/8', beatsPerBar: 2, secondaryAccents: [],
+    beatName: '♩.', subdivision: 3, subdivisionName: '♪',
   },
   {
-    id: '9/8', label: '9/8', beatsPerBar: 9, secondaryAccents: [3, 6], beatName: '♪',
-    compound: { label: '9/8', beatsPerBar: 3, secondaryAccents: [], beatName: '♩.' },
+    id: '9/8', label: '9/8', beatsPerBar: 3, secondaryAccents: [],
+    beatName: '♩.', subdivision: 3, subdivisionName: '♪',
   },
   {
-    id: '12/8', label: '12/8', beatsPerBar: 12, secondaryAccents: [3, 6, 9], beatName: '♪',
-    compound: { label: '12/8', beatsPerBar: 4, secondaryAccents: [], beatName: '♩.' },
+    id: '12/8', label: '12/8', beatsPerBar: 4, secondaryAccents: [],
+    beatName: '♩.', subdivision: 3, subdivisionName: '♪',
   },
 ];
 
 export const DEFAULT_METER_ID = '4/4';
 
+/**
+ * Above roughly four clicks a second the ear stops hearing a pulse and starts hearing a
+ * buzz, so subdivisions past this rate are noise rather than support.
+ */
+export const MAX_CLICK_RATE = 240;
+
 export function findMeter(id: string): Meter {
   return METERS.find((m) => m.id === id) ?? METERS.find((m) => m.id === DEFAULT_METER_ID)!;
 }
 
-/** The beat grid actually clicked, once the dotted-beat preference is applied. */
-export function resolveMeter(id: string, clickDottedBeats: boolean): {
-  beatsPerBar: number;
-  secondaryAccents: number[];
-  beatName: string;
-} {
-  const meter = findMeter(id);
-  return clickDottedBeats && meter.compound ? meter.compound : meter;
+/**
+ * How many clicks to put in each pulse at this tempo.
+ *
+ * Subdivisions are what you want while the passage is slow and the rhythm is still
+ * uncertain; once it is fast they only get in the way of feeling the pulse. Since the
+ * tempo climbs all session, the metronome makes that switch itself rather than asking.
+ */
+export function subdivisionAt(meter: Meter, tempo: number): number {
+  return meter.subdivision > 1 && tempo * meter.subdivision <= MAX_CLICK_RATE
+    ? meter.subdivision
+    : 1;
+}
+
+/** The tempo above which this meter's subdivisions stop sounding, if it has any. */
+export function subdivisionCrossover(meter: Meter): number | null {
+  return meter.subdivision > 1 ? Math.floor(MAX_CLICK_RATE / meter.subdivision) : null;
 }

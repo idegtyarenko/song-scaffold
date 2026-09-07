@@ -294,6 +294,14 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   font-weight: 650;
 }
 
+/* The subdivision note is information, not a milestone — it should not shout. */
+.badge--quiet {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-weight: 500;
+}
+
 .live {
   position: absolute;
   width: 1px;

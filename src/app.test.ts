@@ -116,6 +116,19 @@ describe('the app', () => {
     vi.useRealTimers();
   });
 
+  it('follows the tempo range with a suggested step until you say otherwise', () => {
+    setNumber('#startTempo', 60);
+    setNumber('#targetTempo', 90);
+    expect($<HTMLInputElement>('#step').value).toBe('2');
+
+    setNumber('#targetTempo', 240);
+    expect($<HTMLInputElement>('#step').value).toBe('10');
+
+    setNumber('#step', 4);
+    setNumber('#targetTempo', 90);
+    expect($<HTMLInputElement>('#step').value).toBe('4');
+  });
+
   it('previews the shape of the session before you commit to it', () => {
     setUp(4, 'top', 60, 90);
     expect(text('#setupPreview')).toBe('4 stages · 7 rungs from 60 to 90 BPM in each.');
@@ -307,30 +320,50 @@ describe('the app', () => {
     expect(clicks.slice(0, 4).map((c) => c.frequency)).toEqual([1600, 900, 1200, 900]);
   });
 
-  it('counts 6/8 in two dotted beats, or six eighths', () => {
+  it('subdivides 6/8 while it is slow and drops to the pulse once it is fast', () => {
     setUp(4, 'top', 60, 90);
     $<HTMLInputElement>('#countIn').checked = false;
     $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
     $<HTMLSelectElement>('#meter').value = '6/8';
     $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
-    expect($('#dottedBeatsRow').hidden).toBe(false);
+    expect(text('#meterHint')).toContain('♩.=80');
 
-    $<HTMLInputElement>('#clickDottedBeats').checked = true;
-    $('#clickDottedBeats').dispatchEvent(new Event('change', { bubbles: true }));
     click('#begin');
+    // Two dots for the two dotted beats, whatever the click grid is doing.
     expect(document.querySelectorAll('#beats .beat')).toHaveLength(2);
     expect(text('#nowBeatName')).toBe('♩.');
+    expect($('#nowSubdivision').hidden).toBe(false);
 
-    click('#backToSetup');
-    $<HTMLInputElement>('#clickDottedBeats').checked = false;
-    $('#clickDottedBeats').dispatchEvent(new Event('change', { bubbles: true }));
-    click('#begin');
+    // At ♩.=60 the eighths click too: strong, two quiet, weak, two quiet.
     click('#playPause');
-    runClock(7);
-    expect(document.querySelectorAll('#beats .beat')).toHaveLength(6);
+    runClock(3);
     expect(clicks.slice(0, 6).map((c) => c.frequency)).toEqual([
-      1600, 900, 900, 1200, 900, 900,
+      1600, 700, 700, 900, 700, 700,
     ]);
+
+    // Climb past ♩.=80 and they drop away, leaving the two dotted beats.
+    for (let i = 0; i < 5; i++) click('#faster');
+    expect(text('#nowTempo')).toBe('85');
+    expect($('#nowSubdivision').hidden).toBe(true);
+    clicks = [];
+    runClock(3);
+    // Nothing but the two dotted beats, alternating strong and weak.
+    expect(clicks.length).toBeGreaterThanOrEqual(4);
+    expect([...new Set(clicks.map((c) => c.frequency))].sort((a, b) => a - b)).toEqual([
+      900, 1600,
+    ]);
+    expect(document.querySelectorAll('#beats .beat')).toHaveLength(2);
+  });
+
+  it('leaves simple meters alone at any tempo', () => {
+    setUp(4, 'top', 60, 90);
+    $<HTMLInputElement>('#countIn').checked = false;
+    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
+    click('#begin');
+    expect($('#nowSubdivision').hidden).toBe(true);
+    click('#playPause');
+    runClock(5);
+    expect(clicks.slice(0, 4).map((c) => c.frequency)).toEqual([1600, 900, 1200, 900]);
   });
 
   it('drives the transport from the keyboard', () => {

@@ -35,6 +35,15 @@ Two more rules:
 Building **from the bottom** mirrors the whole thing: stage 1 is the last segment, and each
 stage prepends the one before it, so every run heads forward into music you already know.
 
+## Time signatures
+
+The tempo you type is always the BPM of the pulse — ♩ in 4/4, 𝅗𝅥 in 2/2, ♩. in 6/8, 9/8 and
+12/8. In the compound meters the eighths click as well while the passage is slow, and drop
+away above ♩.=80, where a third click every 250 ms stops being support and starts being a
+buzz. Because the tempo climbs all session, the metronome makes that switch itself rather
+than asking you to predict it. The beat dots always show the pulse, so the display does not
+reshuffle underneath you when the switch happens.
+
 ## Running it
 
 ```sh

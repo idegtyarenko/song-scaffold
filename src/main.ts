@@ -1,6 +1,6 @@
 import './styles.css';
 
-import { METERS, findMeter, resolveMeter } from './meter';
+import { METERS, findMeter, subdivisionAt, subdivisionCrossover } from './meter';
 import { Metronome, type Beat } from './metronome';
 import { describeChunk, tempoLadder } from './sequence';
 import { Session } from './session';
@@ -30,7 +30,6 @@ const fields = {
   targetTempo: el<HTMLInputElement>('targetTempo'),
   step: el<HTMLInputElement>('step'),
   meter: el<HTMLSelectElement>('meter'),
-  clickDottedBeats: el<HTMLInputElement>('clickDottedBeats'),
   countIn: el<HTMLInputElement>('countIn'),
 };
 const directionRadios = radios('direction');
@@ -52,7 +51,8 @@ const view = {
   stepHint: el('stepHint'),
   directionHint: el('directionHint'),
   setupPreview: el('setupPreview'),
-  dottedBeatsRow: el('dottedBeatsRow'),
+  meterHint: el('meterHint'),
+  subdivisionBadge: el('nowSubdivision'),
 };
 
 const buttons = {
@@ -86,12 +86,11 @@ function writeSetupForm(): void {
   fields.targetTempo.value = String(settings.targetTempo);
   fields.step.value = String(settings.step);
   fields.meter.value = settings.meterId;
-  fields.clickDottedBeats.checked = settings.clickDottedBeats;
   fields.countIn.checked = settings.countInBars > 0;
   check(directionRadios, settings.backwards ? 'bottom' : 'top');
 
   view.directionHint.textContent = directionHint();
-  view.dottedBeatsRow.hidden = findMeter(settings.meterId).compound === undefined;
+  view.meterHint.textContent = meterHint();
   writeStepHint();
 }
 
@@ -115,7 +114,6 @@ function readSetupForm(): void {
     step: number(fields.step, DEFAULT_SETTINGS.step),
     backwards: selected(directionRadios) === 'bottom',
     meterId: fields.meter.value,
-    clickDottedBeats: fields.clickDottedBeats.checked,
     countInBars: fields.countIn.checked ? 1 : 0,
   });
   save(settings);
@@ -145,7 +143,6 @@ fields.step.addEventListener('blur', writeSetupForm);
 for (const input of [
   ...directionRadios,
   fields.meter,
-  fields.clickDottedBeats,
   fields.countIn,
 ]) {
   input.addEventListener('change', () => {
@@ -170,16 +167,7 @@ function startSession(): void {
     step: settings.step,
   });
 
-  const grid = resolveMeter(settings.meterId, settings.clickDottedBeats);
-  metronome = new Metronome(
-    {
-      tempo: session.state().rung.tempo,
-      beatsPerBar: grid.beatsPerBar,
-      secondaryAccents: grid.secondaryAccents,
-      countInBars: settings.countInBars,
-    },
-    showBeat,
-  );
+  metronome = new Metronome(clickConfig(session.state().rung.tempo), showBeat);
 
   setupView.hidden = true;
   sessionView.hidden = false;
@@ -198,27 +186,35 @@ function endSession(): void {
   buttons.begin.focus();
 }
 
+/** The click grid for a tempo — the meter decides for itself whether to subdivide. */
+function clickConfig(tempo: number) {
+  const meter = findMeter(settings.meterId);
+  return {
+    tempo,
+    beatsPerBar: meter.beatsPerBar,
+    secondaryAccents: meter.secondaryAccents,
+    subdivision: subdivisionAt(meter, tempo),
+    countInBars: settings.countInBars,
+  };
+}
+
 /** Push the cursor's current rung to the metronome and repaint. */
 function apply(): void {
-  const state = session!.state();
-  const grid = resolveMeter(settings.meterId, settings.clickDottedBeats);
-  metronome!.reconfigure({
-    tempo: state.rung.tempo,
-    beatsPerBar: grid.beatsPerBar,
-    secondaryAccents: grid.secondaryAccents,
-    countInBars: settings.countInBars,
-  });
+  metronome!.reconfigure(clickConfig(session!.state().rung.tempo));
   render();
 }
 
 function render(): void {
   const state = session!.state();
   const { rung, ladder } = state;
-  const grid = resolveMeter(settings.meterId, settings.clickDottedBeats);
+  const meter = findMeter(settings.meterId);
+  const subdivision = subdivisionAt(meter, rung.tempo);
 
   view.chunk.textContent = `Play ${describeChunk(rung.chunk)}`;
   view.tempo.textContent = String(rung.tempo);
-  view.beatName.textContent = grid.beatName;
+  view.beatName.textContent = meter.beatName;
+  view.subdivisionBadge.hidden = subdivision === 1;
+  view.subdivisionBadge.textContent = `+ ${meter.subdivisionName ?? ''}`.trim();
   view.stage.textContent = `Stage ${state.stage} of ${settings.totalSegments}`;
   view.rung.textContent = `rung ${state.rungIndex + 1} of ${ladder.length}`;
   view.badge.hidden = !rung.isTail;
@@ -293,7 +289,7 @@ function renderLadder(): void {
 }
 
 function buildBeatRow(): void {
-  const { beatsPerBar } = resolveMeter(settings.meterId, settings.clickDottedBeats);
+  const { beatsPerBar } = findMeter(settings.meterId);
   if (view.beats.childElementCount === beatsPerBar) return;
   view.beats.replaceChildren(
     ...Array.from({ length: beatsPerBar }, () => {
@@ -305,6 +301,8 @@ function buildBeatRow(): void {
 }
 
 function showBeat(beat: Beat): void {
+  // The dots show the pulse, so the display stays put when subdivisions come and go.
+  if (!beat.isPulse) return;
   const dots = view.beats.children;
   for (let i = 0; i < dots.length; i++) dots[i]!.classList.remove('is-on');
   dots[beat.beat]?.classList.add('is-on');
@@ -372,6 +370,17 @@ document.addEventListener('keydown', (event) => {
 });
 
 // --- Boot -----------------------------------------------------------------
+
+function meterHint(): string {
+  const meter = findMeter(settings.meterId);
+  const crossover = subdivisionCrossover(meter);
+  if (crossover === null) return `Counted in ${meter.beatsPerBar}, tempo is ${meter.beatName} = BPM.`;
+  return (
+    `Counted in ${meter.beatsPerBar}, tempo is ${meter.beatName} = BPM. ` +
+    `${meter.subdivisionName}s click too up to ${meter.beatName}=${crossover}, ` +
+    'then drop away so you can feel the pulse.'
+  );
+}
 
 function directionHint(): string {
   return settings.backwards

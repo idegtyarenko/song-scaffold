@@ -11,21 +11,26 @@
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_HORIZON_S = 0.1;
 
-export type Accent = 'strong' | 'medium' | 'weak';
+export type Accent = 'strong' | 'medium' | 'weak' | 'subdivision';
 
 export interface Beat {
-  /** 0-based position in the bar. */
+  /** 0-based pulse in the bar. */
   beat: number;
   /** 0-based bar since the click started, not counting the count-in. */
   bar: number;
   accent: Accent;
+  /** False for the extra clicks inside a pulse. */
+  isPulse: boolean;
   isCountIn: boolean;
 }
 
 export interface MetronomeConfig {
+  /** BPM of the pulse, whatever the meter counts as one. */
   tempo: number;
   beatsPerBar: number;
   secondaryAccents: number[];
+  /** Clicks per pulse. 1 for just the pulse. */
+  subdivision: number;
   /** Bars of clicks before bar 0 of the music. */
   countInBars: number;
 }
@@ -34,6 +39,7 @@ const TONES: Record<Accent, { frequency: number; gain: number }> = {
   strong: { frequency: 1600, gain: 0.5 },
   medium: { frequency: 1200, gain: 0.34 },
   weak: { frequency: 900, gain: 0.26 },
+  subdivision: { frequency: 700, gain: 0.15 },
 };
 
 export class Metronome {
@@ -41,8 +47,8 @@ export class Metronome {
   private timer: number | null = null;
   private frame: number | null = null;
   private config: MetronomeConfig;
-  /** Beat index since the last (re)start, count-in included. */
-  private beatNumber = 0;
+  /** Click index since the last (re)start, count-in and subdivisions included. */
+  private tick = 0;
   private nextBeatTime = 0;
   private scheduled: OscillatorNode[] = [];
   private pending: { beat: Beat; time: number }[] = [];
@@ -63,7 +69,7 @@ export class Metronome {
     if (this.isRunning) return;
     const context = this.ensureContext();
     void context.resume();
-    this.beatNumber = 0;
+    this.tick = 0;
     this.nextBeatTime = context.currentTime + 0.08;
     this.timer = window.setInterval(() => this.schedule(), LOOKAHEAD_MS);
     this.frame = requestAnimationFrame(() => this.flushPending());
@@ -86,7 +92,7 @@ export class Metronome {
     this.config = config;
     if (!this.isRunning) return;
     this.silencePending();
-    this.beatNumber = 0;
+    this.tick = 0;
     this.nextBeatTime = this.ensureContext().currentTime + 0.08;
     this.schedule();
   }
@@ -98,26 +104,35 @@ export class Metronome {
 
   private schedule(): void {
     const context = this.ensureContext();
+    const interval = 60 / (this.config.tempo * this.config.subdivision);
     while (this.nextBeatTime < context.currentTime + SCHEDULE_HORIZON_S) {
-      const beat = this.describe(this.beatNumber);
+      const beat = this.describe(this.tick);
       this.click(context, this.nextBeatTime, beat.accent, beat.isCountIn);
       this.pending.push({ beat, time: this.nextBeatTime });
-      this.nextBeatTime += 60 / this.config.tempo;
-      this.beatNumber++;
+      this.nextBeatTime += interval;
+      this.tick++;
     }
   }
 
-  private describe(beatNumber: number): Beat {
-    const { beatsPerBar, secondaryAccents, countInBars } = this.config;
-    const countInBeats = countInBars * beatsPerBar;
-    const beat = beatNumber % beatsPerBar;
-    const accent: Accent =
-      beat === 0 ? 'strong' : secondaryAccents.includes(beat) ? 'medium' : 'weak';
+  private describe(tick: number): Beat {
+    const { beatsPerBar, secondaryAccents, subdivision, countInBars } = this.config;
+    const ticksPerBar = beatsPerBar * subdivision;
+    const inBar = tick % ticksPerBar;
+    const beat = Math.floor(inBar / subdivision);
+    const isPulse = inBar % subdivision === 0;
+    const accent: Accent = !isPulse
+      ? 'subdivision'
+      : beat === 0
+        ? 'strong'
+        : secondaryAccents.includes(beat)
+          ? 'medium'
+          : 'weak';
     return {
       beat,
-      bar: Math.floor((beatNumber - countInBeats) / beatsPerBar),
+      bar: Math.floor((tick - countInBars * ticksPerBar) / ticksPerBar),
       accent,
-      isCountIn: beatNumber < countInBeats,
+      isPulse,
+      isCountIn: tick < countInBars * ticksPerBar,
     };
   }
 

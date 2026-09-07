@@ -60,10 +60,7 @@
           <div class="field">
             <label for="meter">Time signature</label>
             <select id="meter"></select>
-            <label class="check" id="dottedBeatsRow">
-              <input id="clickDottedBeats" type="checkbox" />
-              <span>Click dotted beats</span>
-            </label>
+            <p class="hint" id="meterHint"></p>
           </div>
 
           <div class="field field--wide">
@@ -90,6 +87,7 @@
             <span class="dot">·</span>
             <span id="nowRung">rung 1 of 16</span>
             <span class="badge" id="nowBadge" hidden>at target</span>
+            <span class="badge badge--quiet" id="nowSubdivision" hidden></span>
           </p>
         </div>
 

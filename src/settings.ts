@@ -12,7 +12,6 @@ export interface Settings {
   /** True while `step` should keep following `suggestStep` as the tempos change. */
   stepIsAutomatic: boolean;
   meterId: string;
-  clickDottedBeats: boolean;
   countInBars: number;
 }
 
@@ -30,7 +29,6 @@ export const DEFAULT_SETTINGS: Settings = {
   step: suggestStep(75, 150),
   stepIsAutomatic: true,
   meterId: DEFAULT_METER_ID,
-  clickDottedBeats: true,
   countInBars: 1,
 };
 
