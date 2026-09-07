@@ -122,5 +122,6 @@ which she does not spell out, follows the reference implementation at
 <https://nellsonic.github.io/icu-metronome/>.
 
 **One deliberate divergence.** She says to click up "by 5s", a constant increment. This app
-tapers instead, for the reason in [The tempo ladder](#the-tempo-ladder) above. Set the tempo
-steps by hand if you want to stay closer to the letter of her instructions.
+tapers instead, for the reason in [The tempo ladder](#the-tempo-ladder) above. The taper is
+not currently optional: the rung count changes how many steps there are, not how evenly they
+are spaced.
