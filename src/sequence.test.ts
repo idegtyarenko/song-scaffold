@@ -138,10 +138,9 @@ describe('suggestStep', () => {
 });
 
 describe('describeChunk', () => {
-  it('names one segment and a run differently', () => {
-    expect(describeChunk([3], 'bar')).toBe('bar 3');
-    expect(describeChunk([2, 3, 4], 'bar')).toBe('bars 2–4');
-    expect(describeChunk([1, 2], 'phrase')).toBe('phrases 1–2');
+  it('names one bar and a run of bars differently', () => {
+    expect(describeChunk([3])).toBe('bar 3');
+    expect(describeChunk([2, 3, 4])).toBe('bars 2–4');
   });
 });
 

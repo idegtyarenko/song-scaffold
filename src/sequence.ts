@@ -127,11 +127,11 @@ export function suggestStep(start: number, target: number): number {
   );
 }
 
-/** Human-readable name for a chunk, e.g. "bars 2-4" or "bar 3". */
-export function describeChunk(chunk: Chunk, unit: 'bar' | 'phrase'): string {
+/** Human-readable name for a chunk, e.g. "bars 2–4" or "bar 3". */
+export function describeChunk(chunk: Chunk): string {
   const first = chunk[0]!;
   const last = chunk[chunk.length - 1]!;
-  return first === last ? `${unit} ${first}` : `${unit}s ${first}–${last}`;
+  return first === last ? `bar ${first}` : `bars ${first}–${last}`;
 }
 
 function range(from: number, to: number): number[] {

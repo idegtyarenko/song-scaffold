@@ -33,7 +33,6 @@ const fields = {
   clickDottedBeats: el<HTMLInputElement>('clickDottedBeats'),
   countIn: el<HTMLInputElement>('countIn'),
 };
-const segmentUnitRadios = radios('segmentUnit');
 const directionRadios = radios('direction');
 
 const view = {
@@ -89,7 +88,6 @@ function writeSetupForm(): void {
   fields.meter.value = settings.meterId;
   fields.clickDottedBeats.checked = settings.clickDottedBeats;
   fields.countIn.checked = settings.countInBars > 0;
-  check(segmentUnitRadios, settings.segmentUnit);
   check(directionRadios, settings.backwards ? 'bottom' : 'top');
 
   view.directionHint.textContent = directionHint();
@@ -115,7 +113,6 @@ function readSetupForm(): void {
     startTempo: number(fields.startTempo, DEFAULT_SETTINGS.startTempo),
     targetTempo: number(fields.targetTempo, DEFAULT_SETTINGS.targetTempo),
     step: number(fields.step, DEFAULT_SETTINGS.step),
-    segmentUnit: selected(segmentUnitRadios) === 'phrase' ? 'phrase' : 'bar',
     backwards: selected(directionRadios) === 'bottom',
     meterId: fields.meter.value,
     clickDottedBeats: fields.clickDottedBeats.checked,
@@ -146,7 +143,6 @@ fields.step.addEventListener('input', () => {
 fields.step.addEventListener('blur', writeSetupForm);
 
 for (const input of [
-  ...segmentUnitRadios,
   ...directionRadios,
   fields.meter,
   fields.clickDottedBeats,
@@ -218,10 +214,9 @@ function apply(): void {
 function render(): void {
   const state = session!.state();
   const { rung, ladder } = state;
-  const unit = settings.segmentUnit;
   const grid = resolveMeter(settings.meterId, settings.clickDottedBeats);
 
-  view.chunk.textContent = `Play ${describeChunk(rung.chunk, unit)}`;
+  view.chunk.textContent = `Play ${describeChunk(rung.chunk)}`;
   view.tempo.textContent = String(rung.tempo);
   view.beatName.textContent = grid.beatName;
   view.stage.textContent = `Stage ${state.stage} of ${settings.totalSegments}`;
@@ -233,10 +228,10 @@ function render(): void {
   const next = ladder[state.rungIndex + 1];
   const previous = ladder[state.rungIndex - 1];
   view.fasterSub.textContent = next
-    ? `${next.tempo} · ${describeChunk(next.chunk, unit)}`
+    ? `${next.tempo} · ${describeChunk(next.chunk)}`
     : 'stage complete';
   view.slowerSub.textContent = previous
-    ? `${previous.tempo} · ${describeChunk(previous.chunk, unit)}`
+    ? `${previous.tempo} · ${describeChunk(previous.chunk)}`
     : 'at the bottom';
 
   buttons.faster.disabled = !state.canGoFaster;
@@ -250,7 +245,7 @@ function render(): void {
   buildBeatRow();
 
   view.live.textContent =
-    `${describeChunk(rung.chunk, unit)} at ${rung.tempo} BPM. ` +
+    `${describeChunk(rung.chunk)} at ${rung.tempo} BPM. ` +
     `Stage ${state.stage} of ${settings.totalSegments}, rung ${state.rungIndex + 1} of ${ladder.length}.` +
     (state.stageComplete && state.canGoToNextStage ? ' Stage complete — add the next segment.' : '');
 }
@@ -279,13 +274,12 @@ function stageSegments(stage: number): number[] {
 
 function renderLadder(): void {
   const state = session!.state();
-  const unit = settings.segmentUnit;
   view.ladderBody.replaceChildren(
     ...state.ladder.map((rung, index) => {
       const row = document.createElement('tr');
       row.className = index === state.rungIndex ? 'is-current' : '';
       row.classList.toggle('is-tail', rung.isTail);
-      for (const text of [String(index + 1), String(rung.tempo), describeChunk(rung.chunk, unit)]) {
+      for (const text of [String(index + 1), String(rung.tempo), describeChunk(rung.chunk)]) {
         const cell = document.createElement('td');
         cell.textContent = text;
         row.append(cell);
@@ -380,11 +374,10 @@ document.addEventListener('keydown', (event) => {
 // --- Boot -----------------------------------------------------------------
 
 function directionHint(): string {
-  const unit = settings.segmentUnit;
   return settings.backwards
-    ? `Start on ${unit} ${settings.totalSegments} and add the ${unit} before it each stage — ` +
+    ? `Start on bar ${settings.totalSegments} and add the bar before it each stage — ` +
         'backward chaining, so you always end up in music you already know.'
-    : `Start on ${unit} 1 and add the next ${unit} each stage.`;
+    : 'Start on bar 1 and add the next bar each stage.';
 }
 
 fields.totalSegments.max = String(LIMITS.totalSegments.max);

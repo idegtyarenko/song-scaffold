@@ -5,7 +5,6 @@ import { suggestStep } from './sequence';
 
 export interface Settings {
   totalSegments: number;
-  segmentUnit: 'bar' | 'phrase';
   backwards: boolean;
   startTempo: number;
   targetTempo: number;
@@ -25,7 +24,6 @@ export const LIMITS = {
 
 export const DEFAULT_SETTINGS: Settings = {
   totalSegments: 4,
-  segmentUnit: 'bar',
   backwards: false,
   startTempo: 75,
   targetTempo: 150,
