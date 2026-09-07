@@ -105,6 +105,15 @@ subdivision clicks, and the build-towards/from-the-centre variants.
 
 ## Credit
 
-The method is Dr. Molly Gebrian's — <https://www.mollygebrian.com>. The rotation and tail rules
-here were checked against the reference implementation at
+The method is Dr. Molly Gebrian's — <https://www.mollygebrian.com>.
+
+She explains interleaved clicking up in [How To Practice to Increase Speed: Part
+II](https://www.youtube.com/watch?v=75OWZAq-O4U) and demonstrates it in [Part
+III](https://www.youtube.com/watch?v=e08zFDnLOYY); it is Chapter 16 of *Learn Faster, Perform
+Better*. Her [handout on interleaved
+practice](https://www.mollygebrian.com/s/interleaved-practice-handout.pdf) covers the
+principle underneath it, though not clicking up specifically — as far as I can find, no
+public PDF of hers describes this method.
+
+The rotation and tail rules here were checked against the reference implementation at
 <https://nellsonic.github.io/icu-metronome/>.

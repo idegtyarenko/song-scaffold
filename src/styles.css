@@ -90,10 +90,18 @@
 }
 
 .masthead__lede {
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.5rem;
   color: var(--muted);
   max-width: 40ch;
 }
+
+.masthead__sources {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.masthead__separator { margin: 0 0.4rem; }
 
 .masthead__link {
   color: var(--text);

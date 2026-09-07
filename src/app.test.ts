@@ -202,11 +202,17 @@ describe('the app', () => {
     expect($<HTMLInputElement>('#rungs').value).toBe('7');
   });
 
-  it('credits the method with a link to Gebrian’s own list of strategies', () => {
-    const link = $<HTMLAnchorElement>('#methodLink');
-    expect(link.textContent).toContain('Molly Gebrian');
-    expect(link.getAttribute('href')).toMatch(/\.pdf$/);
-    expect(link.getAttribute('rel')).toBe('noreferrer');
+  it('credits the method and points at Gebrian’s own sources', () => {
+    const link = (selector: string) => $<HTMLAnchorElement>(selector);
+    expect(link('#methodLink').textContent).toContain('Molly Gebrian');
+    // Part II is where she explains the method; Part III is the demonstration.
+    expect(link('#methodLink').getAttribute('href')).toContain('75OWZAq-O4U');
+    expect(link('#demoLink').getAttribute('href')).toContain('e08zFDnLOYY');
+    expect(link('#handoutLink').getAttribute('href')).toMatch(/\.pdf$/);
+    for (const selector of ['#methodLink', '#demoLink', '#handoutLink']) {
+      expect(link(selector).getAttribute('rel')).toBe('noreferrer');
+      expect(link(selector).getAttribute('target')).toBe('_blank');
+    }
   });
 
   it('previews the shape of the session before you commit to it', () => {
