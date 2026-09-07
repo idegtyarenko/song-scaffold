@@ -95,6 +95,14 @@
   max-width: 40ch;
 }
 
+.masthead__link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
 /* --- fields -------------------------------------------------------------- */
 
 .fields {

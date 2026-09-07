@@ -202,6 +202,13 @@ describe('the app', () => {
     expect($<HTMLInputElement>('#rungs').value).toBe('7');
   });
 
+  it('credits the method with a link to Gebrian’s own list of strategies', () => {
+    const link = $<HTMLAnchorElement>('#methodLink');
+    expect(link.textContent).toContain('Molly Gebrian');
+    expect(link.getAttribute('href')).toMatch(/\.pdf$/);
+    expect(link.getAttribute('rel')).toBe('noreferrer');
+  });
+
   it('previews the shape of the session before you commit to it', () => {
     setUp(4, 'top', 60, 90);
     expect(text('#setupPreview')).toBe(
