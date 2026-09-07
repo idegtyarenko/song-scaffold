@@ -63,11 +63,14 @@ increment is than the last, 2.5) and `MAX_FIRST_JUMP` (0.12).
 ## Time signatures
 
 The tempo you type is always the BPM of the pulse — ♩ in 4/4, 𝅗𝅥 in 2/2, ♩. in 6/8, 9/8 and
-12/8. In the compound meters the eighths click as well while the passage is slow, and drop
-away above ♩.=80, where a third click every 250 ms stops being support and starts being a
-buzz. Because the tempo climbs all session, the metronome makes that switch itself rather
-than asking you to predict it. The beat dots always show the pulse, so the display does not
-reshuffle underneath you when the switch happens.
+12/8. While the passage is slow the pulse is not left on its own: the compound meters click
+their eighths, and a simple meter gets an extra click on the upbeat below 60, where the gap
+between pulses runs over a second and the player ends up guessing across it. Both drop away
+once they are no longer support — the upbeat at 60, and the compound eighths above ♩.=80,
+where a third click every 250 ms turns into a buzz. Because the tempo climbs all session,
+the metronome makes both switches itself rather than asking you to predict them. The beat
+dots always show the pulse, so the display does not reshuffle underneath you when a switch
+happens.
 
 ## Running it
 

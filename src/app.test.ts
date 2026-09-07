@@ -433,7 +433,10 @@ describe('the app', () => {
     setUp(4, 'top', 60, 90);
     $<HTMLSelectElement>('#meter').value = '2/2';
     $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
-    expect(readNotes('#meterHint')).toBe('Counted in 2 · tempo is [half note] = BPM.');
+    expect(readNotes('#meterHint')).toBe(
+      'Counted in 2 · tempo is [half note] = BPM. The quarters click too up to ' +
+        '[half note]=59, then drop away so you can feel the pulse.',
+    );
 
     click('#begin');
     expect(readNotes('#nowBeatName')).toBe('[half note]');
@@ -479,7 +482,7 @@ describe('the app', () => {
     expect(document.querySelectorAll('#beats .beats__dot')).toHaveLength(2);
   });
 
-  it('leaves simple meters alone at any tempo', () => {
+  it('leaves a simple meter to its own pulse once it is at speed', () => {
     setUp(4, 'top', 60, 90);
     $<HTMLInputElement>('#countIn').checked = false;
     $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
@@ -488,6 +491,43 @@ describe('the app', () => {
     click('#playPause');
     runClock(5);
     expect(clicks.slice(0, 4).map((c) => c.frequency)).toEqual([1600, 900, 1200, 900]);
+  });
+
+  it('clicks the upbeats of a simple meter while the pulse is slower than a second', () => {
+    setUp(4, 'top', 40, 90); // ladder: 40, 52, 62, 71, 79, 85, 90
+    $<HTMLInputElement>('#countIn').checked = false;
+    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
+    expect(readNotes('#meterHint')).toBe(
+      'Counted in 4 · tempo is [quarter note] = BPM. The eighths click too up to ' +
+        '[quarter note]=59, then drop away so you can feel the pulse.',
+    );
+
+    click('#begin');
+    // Four dots for the four quarters, whatever the click grid is doing.
+    expect(document.querySelectorAll('#beats .beats__dot')).toHaveLength(4);
+    expect($('#nowSubdivision').hidden).toBe(false);
+    expect(text('#nowSubdivision')).toBe('+ eighths');
+
+    // At ♩=40 an eighth falls between every pair of quarters.
+    click('#playPause');
+    runClock(6.2);
+    expect(clicks.slice(0, 8).map((c) => c.frequency)).toEqual([
+      1600, 700, 900, 700, 1200, 700, 900, 700,
+    ]);
+
+    // Cross ♩=60 and the upbeats drop away, leaving the four quarters.
+    click('#faster');
+    click('#faster');
+    expect(text('#nowTempo')).toBe('62');
+    expect($('#nowSubdivision').hidden).toBe(true);
+    clicks = [];
+    runClock(9);
+    // Clearing lands mid-bar, so read the bar that starts at the next downbeat.
+    const tones = clicks.map((c) => c.frequency);
+    expect(tones.slice(tones.indexOf(1600), tones.indexOf(1600) + 4)).toEqual([
+      1600, 900, 1200, 900,
+    ]);
+    expect(tones).not.toContain(700);
   });
 
   it('leaves the ladder collapsed on a narrow window', () => {

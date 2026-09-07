@@ -1,6 +1,6 @@
 import './styles.css';
 
-import { METERS, findMeter, subdivisionAt, subdivisionCrossover } from './meter';
+import { METERS, findMeter, subdivisionAt, subdivisionSpan } from './meter';
 import { Metronome, type Beat } from './metronome';
 import { noteGlyph } from './notes';
 import { describeChunk, tempoLadder } from './sequence';
@@ -220,7 +220,7 @@ function clickConfig(tempo: number) {
     tempo,
     beatsPerBar: meter.beatsPerBar,
     secondaryAccents: meter.secondaryAccents,
-    subdivision: subdivisionAt(meter, tempo),
+    subdivision: subdivisionAt(meter, tempo)?.count ?? 1,
     countInBars: settings.countInBars,
   };
 }
@@ -240,8 +240,8 @@ function render(): void {
   view.chunk.textContent = `Play ${describeChunk(rung.chunk)}`;
   view.tempo.textContent = String(rung.tempo);
   view.beatName.innerHTML = noteGlyph(meter.beatNote);
-  view.subdivisionBadge.hidden = subdivision === 1;
-  view.subdivisionBadge.textContent = `+ ${meter.subdivisionWord ?? ''}`.trim();
+  view.subdivisionBadge.hidden = subdivision === null;
+  view.subdivisionBadge.textContent = `+ ${subdivision?.word ?? ''}`.trim();
   view.stage.textContent = `Stage ${state.stage} of ${settings.totalSegments}`;
   view.rung.textContent = `step ${state.rungIndex + 1} of ${ladder.length}`;
   view.badge.hidden = !rung.isTail;
@@ -405,13 +405,13 @@ document.addEventListener('keydown', (event) => {
 
 function meterHint(): string {
   const meter = findMeter(settings.meterId);
-  const crossover = subdivisionCrossover(meter);
+  const span = subdivisionSpan(meter);
   const beat = noteGlyph(meter.beatNote);
   const counted = `Counted in ${meter.beatsPerBar} · tempo is ${beat} = BPM.`;
-  if (crossover === null) return counted;
+  if (span === null) return counted;
   return (
-    `${counted} The ${meter.subdivisionWord} click too up to ` +
-    `${beat}=${crossover}, then drop away so you can feel the pulse.`
+    `${counted} The ${span.subdivision.word} click too up to ` +
+    `${beat}=${span.upTo}, then drop away so you can feel the pulse.`
   );
 }
 
