@@ -13,6 +13,8 @@ export interface Meter {
   subdivision: number;
   /** What one subdivision click is worth, when there are any. */
   subdivisionName?: string;
+  /** The same, as a word, for running text. */
+  subdivisionWord?: string;
 }
 
 export const METERS: Meter[] = [
@@ -26,15 +28,15 @@ export const METERS: Meter[] = [
   { id: '7/8', label: '7/8', beatsPerBar: 7, secondaryAccents: [2, 4], beatName: '♪', subdivision: 1 },
   {
     id: '6/8', label: '6/8', beatsPerBar: 2, secondaryAccents: [],
-    beatName: '♩.', subdivision: 3, subdivisionName: '♪',
+    beatName: '♩.', subdivision: 3, subdivisionName: '♪', subdivisionWord: 'eighths',
   },
   {
     id: '9/8', label: '9/8', beatsPerBar: 3, secondaryAccents: [],
-    beatName: '♩.', subdivision: 3, subdivisionName: '♪',
+    beatName: '♩.', subdivision: 3, subdivisionName: '♪', subdivisionWord: 'eighths',
   },
   {
     id: '12/8', label: '12/8', beatsPerBar: 4, secondaryAccents: [],
-    beatName: '♩.', subdivision: 3, subdivisionName: '♪',
+    beatName: '♩.', subdivision: 3, subdivisionName: '♪', subdivisionWord: 'eighths',
   },
 ];
 

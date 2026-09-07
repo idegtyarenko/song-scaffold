@@ -225,7 +225,7 @@ function render(): void {
   view.tempo.textContent = String(rung.tempo);
   view.beatName.textContent = meter.beatName;
   view.subdivisionBadge.hidden = subdivision === 1;
-  view.subdivisionBadge.textContent = `+ ${meter.subdivisionName ?? ''}`.trim();
+  view.subdivisionBadge.textContent = `+ ${meter.subdivisionWord ?? ''}`.trim();
   view.stage.textContent = `Stage ${state.stage} of ${settings.totalSegments}`;
   view.rung.textContent = `rung ${state.rungIndex + 1} of ${ladder.length}`;
   view.badge.hidden = !rung.isTail;
@@ -385,11 +385,11 @@ document.addEventListener('keydown', (event) => {
 function meterHint(): string {
   const meter = findMeter(settings.meterId);
   const crossover = subdivisionCrossover(meter);
-  if (crossover === null) return `Counted in ${meter.beatsPerBar}, tempo is ${meter.beatName} = BPM.`;
+  const counted = `Counted in ${meter.beatsPerBar} · tempo is ${meter.beatName} = BPM.`;
+  if (crossover === null) return counted;
   return (
-    `Counted in ${meter.beatsPerBar}, tempo is ${meter.beatName} = BPM. ` +
-    `${meter.subdivisionName}s click too up to ${meter.beatName}=${crossover}, ` +
-    'then drop away so you can feel the pulse.'
+    `${counted} The ${meter.subdivisionWord} click too up to ` +
+    `${meter.beatName}=${crossover}, then drop away so you can feel the pulse.`
   );
 }
 

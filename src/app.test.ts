@@ -356,13 +356,17 @@ describe('the app', () => {
     $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
     $<HTMLSelectElement>('#meter').value = '6/8';
     $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
-    expect(text('#meterHint')).toContain('♩.=80');
+    expect(text('#meterHint')).toBe(
+      'Counted in 2 · tempo is ♩. = BPM. The eighths click too up to ♩.=80, ' +
+        'then drop away so you can feel the pulse.',
+    );
 
     click('#begin');
     // Two dots for the two dotted beats, whatever the click grid is doing.
     expect(document.querySelectorAll('#beats .beat')).toHaveLength(2);
     expect(text('#nowBeatName')).toBe('♩.');
     expect($('#nowSubdivision').hidden).toBe(false);
+    expect(text('#nowSubdivision')).toBe('+ eighths');
 
     // At ♩.=60 the eighths click too: strong, two quiet, weak, two quiet.
     click('#playPause');
