@@ -108,13 +108,19 @@ subdivision clicks, and the build-towards/from-the-centre variants.
 
 The method is Dr. Molly Gebrian's — <https://www.mollygebrian.com>.
 
-She explains interleaved clicking up in [How To Practice to Increase Speed: Part
+She writes it out on page 4 of [The Amazing List of Practice
+Techniques](https://mollygebrian.wordpress.com/wp-content/uploads/2020/06/the-amazing-list-of-practice-techniques-with-gingold-rhythms-1.pdf#page=4),
+explains it in [How To Practice to Increase Speed: Part
 II](https://www.youtube.com/watch?v=75OWZAq-O4U) and demonstrates it in [Part
-III](https://www.youtube.com/watch?v=e08zFDnLOYY); it is Chapter 16 of *Learn Faster, Perform
-Better*. Her [handout on interleaved
-practice](https://www.mollygebrian.com/s/interleaved-practice-handout.pdf) covers the
-principle underneath it, though not clicking up specifically — as far as I can find, no
-public PDF of hers describes this method.
+III](https://www.youtube.com/watch?v=e08zFDnLOYY). It is Chapter 16 of *Learn Faster, Perform
+Better*.
 
-The rotation and tail rules here were checked against the reference implementation at
+The rotation here matches her written description exactly — "play the first three
+beats/bars. Then do the NEW bar/beat ONLY at 65. Then the 2nd and 3rd beats at 70. Then the
+new beat at 75. Then all three at 80" — as does working forwards or backwards. The tail rule,
+which she does not spell out, follows the reference implementation at
 <https://nellsonic.github.io/icu-metronome/>.
+
+**One deliberate divergence.** She says to click up "by 5s", a constant increment. This app
+tapers instead, for the reason in [The tempo ladder](#the-tempo-ladder) above. Set the tempo
+steps by hand if you want to stay closer to the letter of her instructions.

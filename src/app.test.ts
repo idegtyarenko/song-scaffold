@@ -205,11 +205,11 @@ describe('the app', () => {
   it('credits the method and points at Gebrian’s own sources', () => {
     const link = (selector: string) => $<HTMLAnchorElement>(selector);
     expect(link('#methodLink').textContent).toContain('Molly Gebrian');
-    // Part II is where she explains the method; Part III is the demonstration.
-    expect(link('#methodLink').getAttribute('href')).toContain('75OWZAq-O4U');
+    // Page 4 is where she writes the method out; Part II explains it and Part III demos it.
+    expect(link('#methodLink').getAttribute('href')).toMatch(/\.pdf#page=4$/);
+    expect(link('#explainLink').getAttribute('href')).toContain('75OWZAq-O4U');
     expect(link('#demoLink').getAttribute('href')).toContain('e08zFDnLOYY');
-    expect(link('#handoutLink').getAttribute('href')).toMatch(/\.pdf$/);
-    for (const selector of ['#methodLink', '#demoLink', '#handoutLink']) {
+    for (const selector of ['#methodLink', '#explainLink', '#demoLink']) {
       expect(link(selector).getAttribute('rel')).toBe('noreferrer');
       expect(link(selector).getAttribute('target')).toBe('_blank');
     }
