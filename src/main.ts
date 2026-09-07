@@ -97,7 +97,7 @@ function writeSetupForm(): void {
 
 function writeRungsHint(): void {
   fields.rungsAuto.setAttribute('aria-pressed', String(settings.rungsIsAutomatic));
-  fields.rungsAuto.classList.toggle('is-on', settings.rungsIsAutomatic);
+  fields.rungsAuto.classList.toggle('button--chip-on', settings.rungsIsAutomatic);
   view.rungsHint.textContent = settings.rungsIsAutomatic
     ? `Sized for the ${settings.startTempo}→${settings.targetTempo} range`
     : 'Tap Auto to size for the range again';
@@ -245,7 +245,7 @@ function render(): void {
   view.rung.textContent = `step ${state.rungIndex + 1} of ${ladder.length}`;
   view.badge.hidden = !rung.isTail;
   buttons.playPause.textContent = metronome!.isRunning ? 'Stop' : 'Start';
-  buttons.playPause.classList.toggle('is-running', metronome!.isRunning);
+  buttons.playPause.classList.toggle('button--running', metronome!.isRunning);
 
   const next = ladder[state.rungIndex + 1];
   const previous = ladder[state.rungIndex - 1];
@@ -260,7 +260,7 @@ function render(): void {
   buttons.slower.disabled = !state.canGoSlower;
   buttons.nextStage.disabled = !state.canGoToNextStage;
   buttons.prevStage.disabled = !state.canGoToPreviousStage;
-  buttons.nextStage.classList.toggle('is-suggested', state.stageComplete && state.canGoToNextStage);
+  buttons.nextStage.classList.toggle('button--suggested', state.stageComplete && state.canGoToNextStage);
 
   renderPips(state.stage, rung.chunk);
   renderLadder();
@@ -280,9 +280,9 @@ function renderPips(stage: number, chunk: number[]): void {
     ...Array.from({ length: settings.totalSegments }, (_, i) => {
       const index = i + 1;
       const pip = document.createElement('span');
-      pip.className = 'pip';
-      pip.classList.toggle('pip--in-stage', inStage.has(index));
-      pip.classList.toggle('pip--playing', playing.has(index));
+      pip.className = 'pips__pip';
+      pip.classList.toggle('pips__pip--in-stage', inStage.has(index));
+      pip.classList.toggle('pips__pip--playing', playing.has(index));
       pip.textContent = String(index);
       return pip;
     }),
@@ -299,10 +299,12 @@ function renderLadder(): void {
   view.ladderBody.replaceChildren(
     ...state.ladder.map((rung, index) => {
       const row = document.createElement('tr');
-      row.className = index === state.rungIndex ? 'is-current' : '';
-      row.classList.toggle('is-tail', rung.isTail);
+      row.className = 'ladder__row';
+      row.classList.toggle('ladder__row--current', index === state.rungIndex);
+      row.classList.toggle('ladder__row--tail', rung.isTail);
       for (const text of [String(index + 1), String(rung.tempo), describeChunk(rung.chunk)]) {
         const cell = document.createElement('td');
+        cell.className = 'ladder__cell';
         cell.textContent = text;
         row.append(cell);
       }
@@ -310,7 +312,7 @@ function renderLadder(): void {
     }),
   );
   if (view.ladderPanel.open) {
-    view.ladderBody.querySelector('.is-current')?.scrollIntoView({ block: 'nearest' });
+    view.ladderBody.querySelector('.ladder__row--current')?.scrollIntoView({ block: 'nearest' });
   }
 }
 
@@ -320,7 +322,7 @@ function buildBeatRow(): void {
   view.beats.replaceChildren(
     ...Array.from({ length: beatsPerBar }, () => {
       const dot = document.createElement('span');
-      dot.className = 'beat';
+      dot.className = 'beats__dot';
       return dot;
     }),
   );
@@ -333,17 +335,17 @@ function showBeat(beat: Beat): void {
   // The dots show the pulse, so the display stays put when subdivisions come and go.
   if (!beat.isPulse) return;
   const dots = view.beats.children;
-  for (let i = 0; i < dots.length; i++) dots[i]!.classList.remove('is-on');
-  dots[beat.beat]?.classList.add('is-on');
-  view.beats.classList.toggle('is-count-in', beat.isCountIn);
+  for (const dot of dots) dot.classList.remove('beats__dot--on', 'beats__dot--count-in');
+  dots[beat.beat]?.classList.add('beats__dot--on');
+  if (beat.isCountIn) dots[beat.beat]?.classList.add('beats__dot--count-in');
 
   // Which bar of the chunk we are on, so a multi-bar chunk stays legible. Nothing is
   // marked during the count-in — you are not playing yet.
   const length = session.state().rung.chunk.length;
   const barInChunk = beat.isCountIn ? -1 : beat.bar % length;
   view.pips
-    .querySelectorAll('.pip--playing')
-    .forEach((pip, index) => pip.classList.toggle('is-now', index === barInChunk));
+    .querySelectorAll('.pips__pip--playing')
+    .forEach((pip, index) => pip.classList.toggle('pips__pip--now', index === barInChunk));
 }
 
 // --- Transport ------------------------------------------------------------

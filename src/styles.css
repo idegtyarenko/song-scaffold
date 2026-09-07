@@ -2,6 +2,10 @@
  * Read from a music stand, at arm's length, often in a dim room: large type for the two
  * things that matter (what to play, how fast), high contrast, generous touch targets, and
  * no affordance that only exists on hover.
+ *
+ * BEM throughout. Every rule below is a single class, so nothing can outrank anything else
+ * on specificity and no declaration needs `!important` to win an argument it should not be
+ * having. The only exceptions are the three document-level rules at the top.
  */
 
 :root {
@@ -35,13 +39,17 @@
 
 * { box-sizing: border-box; }
 
-/*
- * `.check` and friends set `display`, which outranks the user agent's `[hidden]` rule and
- * leaves a row on screen after the script has hidden it. Settle it here, once.
- */
+/* A block that sets `display` would otherwise outrank the user agent's `[hidden]`. */
 [hidden] { display: none !important; }
 
-body {
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- page ---------------------------------------------------------------- */
+
+.page {
   margin: 0;
   background: var(--bg);
   color: var(--text);
@@ -49,11 +57,22 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-main {
+.page__main {
   max-width: 46rem;
   margin: 0 auto;
   padding: clamp(0.75rem, 3vw, 2rem);
 }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- card ---------------------------------------------------------------- */
 
 .card {
   background: var(--surface);
@@ -62,19 +81,21 @@ main {
   padding: clamp(1rem, 3vw, 1.75rem);
 }
 
-/* --- Setup --------------------------------------------------------------- */
+/* --- masthead ------------------------------------------------------------ */
 
-.masthead h1 {
+.masthead__title {
   margin: 0 0 0.35rem;
   font-size: clamp(1.4rem, 4vw, 1.9rem);
   letter-spacing: -0.01em;
 }
 
-.masthead p {
+.masthead__lede {
   margin: 0 0 1.5rem;
   color: var(--muted);
   max-width: 40ch;
 }
+
+/* --- fields -------------------------------------------------------------- */
 
 .fields {
   display: grid;
@@ -82,7 +103,40 @@ main {
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
 }
 
-.field--wide { grid-column: 1 / -1; }
+.fields__item--wide { grid-column: 1 / -1; }
+
+.field__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.field__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.field__input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.field__hint {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* --- group --------------------------------------------------------------- */
 
 /* Start, target and the step count are one decision, so they read as one block. */
 .group {
@@ -92,7 +146,7 @@ main {
   border-radius: var(--radius);
 }
 
-.group legend {
+.group__legend {
   padding: 0 0.4rem;
   color: var(--muted);
   font-size: 0.75rem;
@@ -107,100 +161,56 @@ main {
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
 }
 
-/* `.check` is a label too, and a bare `.field label` would outrank it on specificity and
-   force it back to `display: block` — which is what silently killed its `align-items`. */
-.field label:not(.check),
-.field .label {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
+/* --- choice (segmented control) ------------------------------------------ */
 
-.label-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.label-row label { margin-bottom: 0.35rem; }
-
-.chip {
-  padding: 0.1rem 0.5rem;
-  min-height: 0;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.03em;
-  color: var(--muted);
-  background: transparent;
-}
-
-.chip.is-on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-}
-
-.hint {
-  margin: 0.35rem 0 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-input[type="number"],
-select {
-  width: 100%;
-  padding: 0.6rem 0.7rem;
-  font: inherit;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-  background: var(--surface-raised);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.segmented {
+.choice {
   display: flex;
   gap: 0.4rem;
 }
 
-.segmented label { margin: 0; flex: 1; }
-.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.choice__option {
+  flex: 1;
+  margin: 0;
+}
 
-.segmented span {
+.choice__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice__label {
   display: block;
   padding: 0.6rem 0.5rem;
   text-align: center;
+  white-space: nowrap;
   background: var(--surface-raised);
   border: 1px solid var(--line);
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
-  white-space: nowrap;
 }
 
-.segmented input:checked + span {
+.choice__input:checked + .choice__label {
   background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
   font-weight: 650;
 }
 
+/* --- check --------------------------------------------------------------- */
+
 .check {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.6rem;
-  font-weight: 400;
   font-size: 0.9rem;
   cursor: pointer;
 }
 
 /* The user agent puts its own margin on a checkbox, which knocks it off the text's
    centre line. Zero it and let flexbox do the aligning. */
-.check input {
+.check__box {
   flex: none;
   width: 1.1rem;
   height: 1.1rem;
@@ -208,19 +218,11 @@ select {
   accent-color: var(--accent);
 }
 
-.preview {
-  margin: 1.5rem 0 1rem;
-  padding: 0.6rem 0.8rem;
-  background: var(--surface-raised);
-  border-radius: 8px;
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-}
+.check__label { line-height: 1.2; }
 
-/* --- Buttons ------------------------------------------------------------- */
+/* --- button -------------------------------------------------------------- */
 
-button {
+.button {
   font: inherit;
   color: var(--text);
   background: var(--surface-raised);
@@ -231,31 +233,64 @@ button {
   min-height: 3rem;
 }
 
-button:hover:not(:disabled) { border-color: var(--muted); }
-button:disabled { opacity: 0.35; cursor: not-allowed; }
+.button:hover:not(:disabled) { border-color: var(--muted); }
+.button:disabled { opacity: 0.35; cursor: not-allowed; }
 
-:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.primary {
+.button--primary {
   background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
   font-weight: 650;
 }
 
-.primary.is-running { background: var(--danger); border-color: var(--danger); color: var(--bg); }
+.button--running {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
+}
 
-#begin { width: 100%; }
-
-.secondary {
+.button--secondary {
   border-color: var(--muted);
   font-weight: 600;
 }
 
-/* --- Session: the now panel ---------------------------------------------- */
+.button--chip {
+  padding: 0.1rem 0.5rem;
+  min-height: 0;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  background: transparent;
+}
+
+.button--chip-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.button--suggested {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* --- setup --------------------------------------------------------------- */
+
+.setup__preview {
+  margin: 1.5rem 0 1rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface-raised);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.setup__submit { width: 100%; }
+
+/* --- now ----------------------------------------------------------------- */
 
 .now { text-align: center; }
 
@@ -266,6 +301,33 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   letter-spacing: -0.015em;
 }
 
+.now__tempo {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.now__bpm {
+  display: block;
+  color: var(--text);
+  font-size: clamp(3rem, 14vw, 5rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.now__unit { font-size: 0.9rem; }
+
+.now__where {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.now__dot { margin: 0 0.35rem; }
+
+/* --- pips ---------------------------------------------------------------- */
+
 .pips {
   display: flex;
   flex-wrap: wrap;
@@ -274,7 +336,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   margin: 0.9rem 0;
 }
 
-.pip {
+.pips__pip {
   min-width: 2.1rem;
   padding: 0.3rem 0.45rem;
   border: 1px solid var(--line);
@@ -284,34 +346,22 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   font-variant-numeric: tabular-nums;
 }
 
-.pip--in-stage { color: var(--text); border-color: var(--muted); }
+.pips__pip--in-stage {
+  color: var(--text);
+  border-color: var(--muted);
+}
 
-.pip--playing {
+.pips__pip--playing {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
   font-weight: 650;
 }
 
-/* The bar of a multi-bar chunk you are on right now. */
-.pip--playing.is-now { box-shadow: 0 0 0 3px var(--accent), 0 0 0 4px var(--surface); }
+/* The segment of a multi-segment chunk you are on right now. */
+.pips__pip--now { box-shadow: 0 0 0 3px var(--accent), 0 0 0 4px var(--surface); }
 
-.now__tempo {
-  margin: 0.4rem 0 0;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.now__tempo strong {
-  display: block;
-  color: var(--text);
-  font-size: clamp(3rem, 14vw, 5rem);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-}
-
-.now__tempo span { font-size: 0.9rem; }
+/* --- beats --------------------------------------------------------------- */
 
 .beats {
   display: flex;
@@ -321,7 +371,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   min-height: 0.75rem;
 }
 
-.beat {
+.beats__dot {
   width: 0.7rem;
   height: 0.7rem;
   border-radius: 50%;
@@ -329,16 +379,14 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   transition: background 60ms linear, transform 60ms linear;
 }
 
-.beat.is-on { background: var(--accent); transform: scale(1.35); }
-.beats.is-count-in .beat.is-on { background: var(--muted); }
-
-.now__where {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.9rem;
+.beats__dot--on {
+  background: var(--accent);
+  transform: scale(1.35);
 }
 
-.now__where .dot { margin: 0 0.35rem; }
+.beats__dot--count-in { background: var(--muted); }
+
+/* --- badge --------------------------------------------------------------- */
 
 .badge {
   margin-left: 0.5rem;
@@ -358,16 +406,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   font-weight: 500;
 }
 
-.live {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-/* --- Session: transport --------------------------------------------------- */
+/* --- transport ------------------------------------------------------------ */
 
 .transport { margin: 1.5rem 0 1rem; }
 
@@ -384,7 +423,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   grid-template-columns: 1fr 1fr;
 }
 
-.transport__grid button {
+.transport__action {
   display: grid;
   gap: 0.15rem;
   text-align: left;
@@ -393,38 +432,116 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   align-content: center;
 }
 
-.transport__grid .key {
+.transport__key {
   color: var(--muted);
   font-size: 0.7rem;
   letter-spacing: 0.06em;
 }
 
-.transport__grid .name { font-weight: 600; }
+.transport__name { font-weight: 600; }
+.transport__name--large { font-size: 1.05rem; }
 
-.transport__grid .sub {
+.transport__sub {
   color: var(--muted);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
 
-.tempo .name { font-size: 1.05rem; }
+/* --- ladder --------------------------------------------------------------- */
 
-#nextStage.is-suggested {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+.ladder {
+  margin-top: 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.75rem;
 }
 
-/* --- Session: ladder ------------------------------------------------------ */
+.ladder__summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
 
-.ladder { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 0.75rem; }
+.ladder__scroll {
+  max-height: 15rem;
+  overflow: auto;
+  margin-top: 0.6rem;
+}
+
+.ladder__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ladder__heading {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.ladder__cell {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.ladder__row--tail .ladder__cell { color: var(--muted); }
+
+.ladder__row--current .ladder__cell {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 650;
+}
+
+/* --- session -------------------------------------------------------------- */
+
+.session__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+/* --- keys ----------------------------------------------------------------- */
+
+.keys {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.keys__key {
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-raised);
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+/* --- wide layout ----------------------------------------------------------- */
 
 /* Wide enough for two columns: the ladder stops being a drawer and just stays open
    beside the transport, where it can be read without hiding the controls. */
 @media (min-width: 62rem) {
-  main { max-width: 70rem; }
-  #setup { max-width: 46rem; margin-inline: auto; }
+  .page__main { max-width: 70rem; }
 
-  #session {
+  .setup {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
+  .session {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 19rem;
     grid-template-rows: auto auto;
@@ -444,66 +561,16 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   }
 
   /* Still a heading, no longer a control — there is nothing to collapse into. */
-  .ladder summary { list-style: none; pointer-events: none; font-weight: 600; }
-  .ladder summary::-webkit-details-marker { display: none; }
+  .ladder__summary {
+    list-style: none;
+    pointer-events: none;
+    font-weight: 600;
+  }
+
+  .ladder__summary::-webkit-details-marker { display: none; }
   .ladder__scroll { max-height: min(32rem, 70vh); }
 }
 
-.ladder summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.ladder__scroll { max-height: 15rem; overflow: auto; margin-top: 0.6rem; }
-
-.ladder table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.ladder th,
-.ladder td {
-  text-align: left;
-  padding: 0.35rem 0.5rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.ladder th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--surface); }
-.ladder tr.is-tail td { color: var(--muted); }
-
-.ladder tr.is-current td {
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 650;
-}
-
-/* --- Session: footer ------------------------------------------------------ */
-
-.session__footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--line);
-}
-
-.keys { margin: 0; color: var(--muted); font-size: 0.78rem; }
-
-kbd {
-  padding: 0.05rem 0.3rem;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--surface-raised);
-  font: inherit;
-  font-size: 0.72rem;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .beat { transition: none; }
+  .beats__dot { transition: none; }
 }

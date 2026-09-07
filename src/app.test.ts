@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Under the jsdom environment `import.meta.url` is an http URL, so resolve from the root.
 const INDEX_HTML = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8');
+const BODY_HTML = /<body[^>]*>([\s\S]*)<\/body>/.exec(INDEX_HTML)![1]!;
 
 // jsdom has no layout, so it implements no scrolling. The ladder scrolls its current row
 // into view whenever it is open.
@@ -103,7 +104,7 @@ async function bootApp({ wide = false } = {}): Promise<void> {
   vi.stubGlobal('AudioContext', FakeAudioContext);
   stubMatchMedia(wide);
   trackDocumentListeners();
-  document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
+  document.body.innerHTML = BODY_HTML;
   await import('./main');
 }
 
@@ -131,8 +132,8 @@ function choose(name: string, value: string): void {
 
 /** The visible ladder, as `["60 · segments 1–3", ...]`. */
 function ladder(): string[] {
-  return [...document.querySelectorAll('#ladderBody tr')].map((row) => {
-    const cells = [...row.querySelectorAll('td')].map((cell) => cell.textContent);
+  return [...document.querySelectorAll('#ladderBody .ladder__row')].map((row) => {
+    const cells = [...row.querySelectorAll('.ladder__cell')].map((cell) => cell.textContent);
     return `${cells[1]} · ${cells[2]}`;
   });
 }
@@ -192,7 +193,7 @@ describe('the app', () => {
 
     vi.resetModules();
     trackDocumentListeners();
-    document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
+    document.body.innerHTML = BODY_HTML;
     await import('./main');
 
     expect($<HTMLInputElement>('#rungs').value).toBe('20');
@@ -283,7 +284,7 @@ describe('the app', () => {
     click('#faster');
     expect(text('#nowChunk')).toBe('Play segments 1–3');
     expect($<HTMLButtonElement>('#faster').disabled).toBe(true);
-    expect($<HTMLButtonElement>('#nextStage').classList.contains('is-suggested')).toBe(true);
+    expect($<HTMLButtonElement>('#nextStage').classList.contains('button--suggested')).toBe(true);
   });
 
   it('stops at both ends instead of wrapping', () => {
@@ -312,10 +313,10 @@ describe('the app', () => {
     click('#begin');
     click('#nextStage');
     click('#faster'); // stage 2, chunk [2]
-    const pips = [...document.querySelectorAll('#pips .pip')].map((pip) => ({
+    const pips = [...document.querySelectorAll('#pips .pips__pip')].map((pip) => ({
       label: pip.textContent,
-      inStage: pip.classList.contains('pip--in-stage'),
-      playing: pip.classList.contains('pip--playing'),
+      inStage: pip.classList.contains('pips__pip--in-stage'),
+      playing: pip.classList.contains('pips__pip--playing'),
     }));
     expect(pips).toEqual([
       { label: '1', inStage: true, playing: false },
@@ -333,7 +334,7 @@ describe('the app', () => {
 
     click('#playPause');
     expect(text('#playPause')).toBe('Stop');
-    expect(document.querySelectorAll('#beats .beat')).toHaveLength(4);
+    expect(document.querySelectorAll('#beats .beats__dot')).toHaveLength(4);
 
     // A whole count-in bar a fifth below, then the music, one beat a second at 60 BPM.
     runClock(5);
@@ -364,11 +365,11 @@ describe('the app', () => {
     click('#nextStage'); // stage 3, chunk [1,2,3]
     click('#playPause');
 
-    const lit = () => [...document.querySelectorAll('#beats .beat')].findIndex((dot) =>
-      dot.classList.contains('is-on'),
+    const lit = () => [...document.querySelectorAll('#beats .beats__dot')].findIndex((dot) =>
+      dot.classList.contains('beats__dot--on'),
     );
-    const barNow = () => [...document.querySelectorAll('#pips .pip--playing')].findIndex((pip) =>
-      pip.classList.contains('is-now'),
+    const barNow = () => [...document.querySelectorAll('#pips .pips__pip--playing')].findIndex(
+      (pip) => pip.classList.contains('pips__pip--now'),
     );
 
     runClock(0.2);
@@ -407,7 +408,7 @@ describe('the app', () => {
 
     click('#begin');
     // Two dots for the two dotted beats, whatever the click grid is doing.
-    expect(document.querySelectorAll('#beats .beat')).toHaveLength(2);
+    expect(document.querySelectorAll('#beats .beats__dot')).toHaveLength(2);
     expect(text('#nowBeatName')).toBe('♩.');
     expect($('#nowSubdivision').hidden).toBe(false);
     expect(text('#nowSubdivision')).toBe('+ eighths');
@@ -430,7 +431,7 @@ describe('the app', () => {
     expect([...new Set(clicks.map((c) => c.frequency))].sort((a, b) => a - b)).toEqual([
       900, 1600,
     ]);
-    expect(document.querySelectorAll('#beats .beat')).toHaveLength(2);
+    expect(document.querySelectorAll('#beats .beats__dot')).toHaveLength(2);
   });
 
   it('leaves simple meters alone at any tempo', () => {
@@ -484,7 +485,7 @@ describe('the app', () => {
     // Same storage, fresh module and DOM.
     vi.resetModules();
     trackDocumentListeners();
-    document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
+    document.body.innerHTML = BODY_HTML;
     await import('./main');
 
     expect($<HTMLInputElement>('#totalSegments').value).toBe('7');
