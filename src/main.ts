@@ -327,6 +327,9 @@ function buildBeatRow(): void {
 }
 
 function showBeat(beat: Beat): void {
+  // Beats are reported from an animation frame, which can outlive the session that asked
+  // for them — leaving the setup form mid-bar used to land here with no session at all.
+  if (!session) return;
   // The dots show the pulse, so the display stays put when subdivisions come and go.
   if (!beat.isPulse) return;
   const dots = view.beats.children;
@@ -336,7 +339,7 @@ function showBeat(beat: Beat): void {
 
   // Which bar of the chunk we are on, so a multi-bar chunk stays legible. Nothing is
   // marked during the count-in — you are not playing yet.
-  const length = session!.state().rung.chunk.length;
+  const length = session.state().rung.chunk.length;
   const barInChunk = beat.isCountIn ? -1 : beat.bar % length;
   view.pips
     .querySelectorAll('.pip--playing')
