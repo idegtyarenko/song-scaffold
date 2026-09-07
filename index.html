@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta
+      name="description"
+      content="A practice metronome implementing Dr. Molly Gebrian's Interleaved Clicking Up method."
+    />
+    <title>Interleaved Clicking Up</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>&#9835;</text></svg>" />
+  </head>
+  <body>
+    <main>
+      <!-- Setup -->
+      <section id="setup" class="card">
+        <header class="masthead">
+          <h1>Interleaved Clicking Up</h1>
+          <p>
+            Dr. Molly Gebrian&rsquo;s method for taking a hard passage up to tempo: add one
+            segment at a time, and rotate through overlapping chunks as the metronome climbs.
+          </p>
+        </header>
+
+        <div class="fields">
+          <div class="field">
+            <label for="totalSegments">Segments in the passage</label>
+            <input id="totalSegments" type="number" min="1" max="15" step="1" />
+            <p class="hint">How many bars or phrases you have split it into.</p>
+          </div>
+
+          <div class="field">
+            <span class="label">Segments are</span>
+            <div class="segmented" role="radiogroup" aria-label="Segments are">
+              <label><input type="radio" name="segmentUnit" value="bar" /><span>Bars</span></label>
+              <label><input type="radio" name="segmentUnit" value="phrase" /><span>Phrases</span></label>
+            </div>
+          </div>
+
+          <div class="field field--wide">
+            <span class="label">Build from</span>
+            <div class="segmented" role="radiogroup" aria-label="Build from">
+              <label><input type="radio" name="direction" value="top" /><span>The top</span></label>
+              <label><input type="radio" name="direction" value="bottom" /><span>The bottom</span></label>
+            </div>
+            <p class="hint" id="directionHint"></p>
+          </div>
+
+          <div class="field">
+            <label for="startTempo">Start tempo</label>
+            <input id="startTempo" type="number" min="20" max="300" step="1" />
+            <p class="hint">BPM</p>
+          </div>
+
+          <div class="field">
+            <label for="targetTempo">Target tempo</label>
+            <input id="targetTempo" type="number" min="20" max="300" step="1" />
+            <p class="hint">BPM</p>
+          </div>
+
+          <div class="field">
+            <label for="step">Step</label>
+            <input id="step" type="number" min="1" max="50" step="1" />
+            <p class="hint" id="stepHint"></p>
+          </div>
+
+          <div class="field">
+            <label for="meter">Time signature</label>
+            <select id="meter"></select>
+            <label class="check" id="dottedBeatsRow">
+              <input id="clickDottedBeats" type="checkbox" />
+              <span>Click dotted beats</span>
+            </label>
+          </div>
+
+          <div class="field field--wide">
+            <label class="check">
+              <input id="countIn" type="checkbox" />
+              <span>Count in one bar before each repetition</span>
+            </label>
+          </div>
+        </div>
+
+        <p class="preview" id="setupPreview"></p>
+        <button id="begin" class="primary">Start practising</button>
+      </section>
+
+      <!-- Session -->
+      <section id="session" class="card" hidden>
+        <div class="now">
+          <p class="now__chunk" id="nowChunk">bar 1</p>
+          <div class="pips" id="pips" aria-hidden="true"></div>
+          <p class="now__tempo"><strong id="nowTempo">75</strong><span id="nowBeatName">♩</span> <span>= BPM</span></p>
+          <div class="beats" id="beats" aria-hidden="true"></div>
+          <p class="now__where">
+            <span id="nowStage">Stage 1 of 4</span>
+            <span class="dot">·</span>
+            <span id="nowRung">rung 1 of 16</span>
+            <span class="badge" id="nowBadge" hidden>at target</span>
+          </p>
+        </div>
+
+        <p class="live" id="live" role="status" aria-live="polite"></p>
+
+        <div class="transport">
+          <button id="playPause" class="primary transport__play">Start</button>
+          <div class="transport__grid">
+            <button id="faster" class="tempo">
+              <span class="key">↑</span><span class="name">Faster</span>
+              <span class="sub" id="fasterSub"></span>
+            </button>
+            <button id="slower" class="tempo">
+              <span class="key">↓</span><span class="name">Slower</span>
+              <span class="sub" id="slowerSub"></span>
+            </button>
+            <button id="prevStage">
+              <span class="key">⇧←</span><span class="name">Previous stage</span>
+              <span class="sub">drop a segment</span>
+            </button>
+            <button id="nextStage">
+              <span class="key">⇧→</span><span class="name">Next stage</span>
+              <span class="sub">add a segment</span>
+            </button>
+          </div>
+        </div>
+
+        <details class="ladder" id="ladderPanel">
+          <summary>Ladder for this stage</summary>
+          <div class="ladder__scroll">
+            <table>
+              <thead>
+                <tr><th scope="col">#</th><th scope="col">Tempo</th><th scope="col">Play</th></tr>
+              </thead>
+              <tbody id="ladderBody"></tbody>
+            </table>
+          </div>
+        </details>
+
+        <footer class="session__footer">
+          <button id="backToSetup" class="link">Change setup</button>
+          <p class="keys">
+            <kbd>Space</kbd> start/stop · <kbd>↑</kbd><kbd>↓</kbd> tempo ·
+            <kbd>⇧</kbd>+<kbd>←</kbd><kbd>→</kbd> stage
+          </p>
+        </footer>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

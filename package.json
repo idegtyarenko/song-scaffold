@@ -1,0 +1,22 @@
+{
+  "name": "interleaved-clicking-up",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A practice metronome implementing Dr. Molly Gebrian's Interleaved Clicking Up method",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}
