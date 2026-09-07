@@ -127,6 +127,36 @@ describe('the app', () => {
     setNumber('#step', 4);
     setNumber('#targetTempo', 90);
     expect($<HTMLInputElement>('#step').value).toBe('4');
+    expect($('#stepAuto').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('hands the step back to the tempo range when you tap Auto', () => {
+    setNumber('#startTempo', 60);
+    setNumber('#targetTempo', 90);
+    setNumber('#step', 7);
+    expect($<HTMLInputElement>('#step').value).toBe('7');
+
+    click('#stepAuto');
+    expect($<HTMLInputElement>('#step').value).toBe('2');
+    expect($('#stepAuto').getAttribute('aria-pressed')).toBe('true');
+
+    setNumber('#targetTempo', 240);
+    expect($<HTMLInputElement>('#step').value).toBe('10');
+  });
+
+  it('shows a manual step as manual after a reload, and can still recover it', async () => {
+    setNumber('#startTempo', 60);
+    setNumber('#targetTempo', 90);
+    setNumber('#step', 7);
+
+    vi.resetModules();
+    document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
+    await import('./main');
+
+    expect($<HTMLInputElement>('#step').value).toBe('7');
+    expect($('#stepAuto').getAttribute('aria-pressed')).toBe('false');
+    click('#stepAuto');
+    expect($<HTMLInputElement>('#step').value).toBe('2');
   });
 
   it('previews the shape of the session before you commit to it', () => {

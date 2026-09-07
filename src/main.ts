@@ -29,6 +29,7 @@ const fields = {
   startTempo: el<HTMLInputElement>('startTempo'),
   targetTempo: el<HTMLInputElement>('targetTempo'),
   step: el<HTMLInputElement>('step'),
+  stepAuto: el<HTMLButtonElement>('stepAuto'),
   meter: el<HTMLSelectElement>('meter'),
   countIn: el<HTMLInputElement>('countIn'),
 };
@@ -95,9 +96,11 @@ function writeSetupForm(): void {
 }
 
 function writeStepHint(): void {
+  fields.stepAuto.setAttribute('aria-pressed', String(settings.stepIsAutomatic));
+  fields.stepAuto.classList.toggle('is-on', settings.stepIsAutomatic);
   view.stepHint.textContent = settings.stepIsAutomatic
-    ? `BPM per rung · suggested for ${settings.startTempo}→${settings.targetTempo}`
-    : 'BPM per rung · clear the box for a suggestion';
+    ? `BPM per rung, following the ${settings.startTempo}→${settings.targetTempo} range`
+    : 'BPM per rung · tap Auto to follow the tempo range again';
 
   const rungs = tempoLadder(settings.startTempo, settings.targetTempo, settings.step).length;
   view.setupPreview.textContent =
@@ -129,16 +132,24 @@ for (const input of [fields.totalSegments, fields.startTempo, fields.targetTempo
   input.addEventListener('blur', writeSetupForm);
 }
 
-// Typing a step takes it off the automatic suggestion; clearing the box hands it back.
-// The field itself is left alone while it has focus, so a half-typed number is not clamped
-// out from under the cursor.
+// Typing a step takes it off the automatic suggestion; the Auto button is the way back —
+// and it stays on screen, unlike the old "clear the box" trick, which nobody would find
+// once a stale preference had been persisted. The field is left alone while it has focus,
+// so a half-typed number is not clamped out from under the cursor.
 fields.step.addEventListener('input', () => {
-  settings.stepIsAutomatic = fields.step.value.trim() === '';
+  settings.stepIsAutomatic = false;
   readSetupForm();
   writeStepHint();
 });
 
 fields.step.addEventListener('blur', writeSetupForm);
+
+fields.stepAuto.addEventListener('click', () => {
+  settings.stepIsAutomatic = true;
+  readSetupForm();
+  fields.step.value = String(settings.step);
+  writeStepHint();
+});
 
 for (const input of [
   ...directionRadios,
