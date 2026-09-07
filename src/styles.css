@@ -107,7 +107,9 @@ main {
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
 }
 
-.field label,
+/* `.check` is a label too, and a bare `.field label` would outrank it on specificity and
+   force it back to `display: block` — which is what silently killed its `align-items`. */
+.field label:not(.check),
 .field .label {
   display: block;
   margin-bottom: 0.35rem;
@@ -191,8 +193,8 @@ select {
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.6rem;
-  font-weight: 400 !important;
-  font-size: 0.9rem !important;
+  font-weight: 400;
+  font-size: 0.9rem;
   cursor: pointer;
 }
 
