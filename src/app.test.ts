@@ -115,6 +115,15 @@ const $ = <T extends HTMLElement>(selector: string): T => {
 };
 
 const text = (selector: string) => $(selector).textContent?.trim() ?? '';
+
+/** Note values are drawn as SVG, so read them back through the label they carry. */
+function readNotes(selector: string): string {
+  const node = $(selector).cloneNode(true) as HTMLElement;
+  for (const glyph of node.querySelectorAll('svg.glyph')) {
+    glyph.replaceWith(node.ownerDocument.createTextNode(`[${glyph.getAttribute('aria-label')}]`));
+  }
+  return node.textContent?.trim() ?? '';
+}
 const click = (selector: string) => $<HTMLButtonElement>(selector).click();
 
 function setNumber(selector: string, value: number): void {
@@ -420,21 +429,32 @@ describe('the app', () => {
     expect(clicks.slice(0, 4).map((c) => c.frequency)).toEqual([1600, 900, 1200, 900]);
   });
 
+  it('draws the half note of 2/2, which no font would render', () => {
+    setUp(4, 'top', 60, 90);
+    $<HTMLSelectElement>('#meter').value = '2/2';
+    $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
+    expect(readNotes('#meterHint')).toBe('Counted in 2 · tempo is [half note] = BPM.');
+
+    click('#begin');
+    expect(readNotes('#nowBeatName')).toBe('[half note]');
+    expect($('#nowBeatName svg.glyph')).toBeTruthy();
+  });
+
   it('subdivides 6/8 while it is slow and drops to the pulse once it is fast', () => {
     setUp(4, 'top', 60, 90);
     $<HTMLInputElement>('#countIn').checked = false;
     $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
     $<HTMLSelectElement>('#meter').value = '6/8';
     $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
-    expect(text('#meterHint')).toBe(
-      'Counted in 2 · tempo is ♩. = BPM. The eighths click too up to ♩.=80, ' +
-        'then drop away so you can feel the pulse.',
+    expect(readNotes('#meterHint')).toBe(
+      'Counted in 2 · tempo is [dotted quarter note] = BPM. The eighths click too up to ' +
+        '[dotted quarter note]=80, then drop away so you can feel the pulse.',
     );
 
     click('#begin');
     // Two dots for the two dotted beats, whatever the click grid is doing.
     expect(document.querySelectorAll('#beats .beats__dot')).toHaveLength(2);
-    expect(text('#nowBeatName')).toBe('♩.');
+    expect(readNotes('#nowBeatName')).toBe('[dotted quarter note]');
     expect($('#nowSubdivision').hidden).toBe(false);
     expect(text('#nowSubdivision')).toBe('+ eighths');
 

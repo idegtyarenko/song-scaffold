@@ -2,6 +2,7 @@ import './styles.css';
 
 import { METERS, findMeter, subdivisionAt, subdivisionCrossover } from './meter';
 import { Metronome, type Beat } from './metronome';
+import { noteGlyph } from './notes';
 import { describeChunk, tempoLadder } from './sequence';
 import { Session } from './session';
 import {
@@ -91,7 +92,7 @@ function writeSetupForm(): void {
   check(directionRadios, settings.backwards ? 'bottom' : 'top');
 
   view.directionHint.textContent = directionHint();
-  view.meterHint.textContent = meterHint();
+  view.meterHint.innerHTML = meterHint();
   writeRungsHint();
 }
 
@@ -238,7 +239,7 @@ function render(): void {
 
   view.chunk.textContent = `Play ${describeChunk(rung.chunk)}`;
   view.tempo.textContent = String(rung.tempo);
-  view.beatName.textContent = meter.beatName;
+  view.beatName.innerHTML = noteGlyph(meter.beatNote);
   view.subdivisionBadge.hidden = subdivision === 1;
   view.subdivisionBadge.textContent = `+ ${meter.subdivisionWord ?? ''}`.trim();
   view.stage.textContent = `Stage ${state.stage} of ${settings.totalSegments}`;
@@ -405,11 +406,12 @@ document.addEventListener('keydown', (event) => {
 function meterHint(): string {
   const meter = findMeter(settings.meterId);
   const crossover = subdivisionCrossover(meter);
-  const counted = `Counted in ${meter.beatsPerBar} · tempo is ${meter.beatName} = BPM.`;
+  const beat = noteGlyph(meter.beatNote);
+  const counted = `Counted in ${meter.beatsPerBar} · tempo is ${beat} = BPM.`;
   if (crossover === null) return counted;
   return (
     `${counted} The ${meter.subdivisionWord} click too up to ` +
-    `${meter.beatName}=${crossover}, then drop away so you can feel the pulse.`
+    `${beat}=${crossover}, then drop away so you can feel the pulse.`
   );
 }
 

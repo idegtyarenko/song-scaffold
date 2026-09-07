@@ -358,6 +358,18 @@
 
 .now__unit { font-size: 0.9rem; }
 
+/* --- glyph --------------------------------------------------------------- */
+
+/*
+ * Note values are drawn, not typed: Unicode has no half note outside the astral plane,
+ * which no system font covers. See src/notes.ts.
+ */
+.glyph {
+  width: 0.75em;
+  height: 1.5em;
+  vertical-align: -0.35em;
+}
+
 .now__where {
   margin: 0;
   color: var(--muted);

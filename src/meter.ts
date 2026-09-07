@@ -1,5 +1,7 @@
 /** Time signatures: their pulse, their accents, and when eighths are worth clicking. */
 
+import type { NoteValue } from './notes';
+
 export interface Meter {
   id: string;
   label: string;
@@ -8,35 +10,35 @@ export interface Meter {
   /** 0-based pulses carrying a secondary accent. Pulse 0 always carries the main accent. */
   secondaryAccents: number[];
   /** What one pulse is worth. The tempo is always this note's BPM. */
-  beatName: string;
+  beatNote: NoteValue;
   /** Clicks per pulse available as rhythmic support. 1 means the pulse is all there is. */
   subdivision: number;
   /** What one subdivision click is worth, when there are any. */
-  subdivisionName?: string;
+  subdivisionNote?: NoteValue;
   /** The same, as a word, for running text. */
   subdivisionWord?: string;
 }
 
 export const METERS: Meter[] = [
-  { id: '2/4', label: '2/4', beatsPerBar: 2, secondaryAccents: [], beatName: '♩', subdivision: 1 },
-  { id: '3/4', label: '3/4', beatsPerBar: 3, secondaryAccents: [], beatName: '♩', subdivision: 1 },
-  { id: '4/4', label: '4/4', beatsPerBar: 4, secondaryAccents: [2], beatName: '♩', subdivision: 1 },
-  { id: '5/4', label: '5/4', beatsPerBar: 5, secondaryAccents: [3], beatName: '♩', subdivision: 1 },
-  { id: '2/2', label: '2/2', beatsPerBar: 2, secondaryAccents: [], beatName: '𝅗𝅥', subdivision: 1 },
-  { id: '3/2', label: '3/2', beatsPerBar: 3, secondaryAccents: [], beatName: '𝅗𝅥', subdivision: 1 },
-  { id: '3/8', label: '3/8', beatsPerBar: 3, secondaryAccents: [], beatName: '♪', subdivision: 1 },
-  { id: '7/8', label: '7/8', beatsPerBar: 7, secondaryAccents: [2, 4], beatName: '♪', subdivision: 1 },
+  { id: '2/4', label: '2/4', beatsPerBar: 2, secondaryAccents: [], beatNote: 'quarter', subdivision: 1 },
+  { id: '3/4', label: '3/4', beatsPerBar: 3, secondaryAccents: [], beatNote: 'quarter', subdivision: 1 },
+  { id: '4/4', label: '4/4', beatsPerBar: 4, secondaryAccents: [2], beatNote: 'quarter', subdivision: 1 },
+  { id: '5/4', label: '5/4', beatsPerBar: 5, secondaryAccents: [3], beatNote: 'quarter', subdivision: 1 },
+  { id: '2/2', label: '2/2', beatsPerBar: 2, secondaryAccents: [], beatNote: 'half', subdivision: 1 },
+  { id: '3/2', label: '3/2', beatsPerBar: 3, secondaryAccents: [], beatNote: 'half', subdivision: 1 },
+  { id: '3/8', label: '3/8', beatsPerBar: 3, secondaryAccents: [], beatNote: 'eighth', subdivision: 1 },
+  { id: '7/8', label: '7/8', beatsPerBar: 7, secondaryAccents: [2, 4], beatNote: 'eighth', subdivision: 1 },
   {
     id: '6/8', label: '6/8', beatsPerBar: 2, secondaryAccents: [],
-    beatName: '♩.', subdivision: 3, subdivisionName: '♪', subdivisionWord: 'eighths',
+    beatNote: 'dotted-quarter', subdivision: 3, subdivisionNote: 'eighth', subdivisionWord: 'eighths',
   },
   {
     id: '9/8', label: '9/8', beatsPerBar: 3, secondaryAccents: [],
-    beatName: '♩.', subdivision: 3, subdivisionName: '♪', subdivisionWord: 'eighths',
+    beatNote: 'dotted-quarter', subdivision: 3, subdivisionNote: 'eighth', subdivisionWord: 'eighths',
   },
   {
     id: '12/8', label: '12/8', beatsPerBar: 4, secondaryAccents: [],
-    beatName: '♩.', subdivision: 3, subdivisionName: '♪', subdivisionWord: 'eighths',
+    beatNote: 'dotted-quarter', subdivision: 3, subdivisionNote: 'eighth', subdivisionWord: 'eighths',
   },
 ];
 
