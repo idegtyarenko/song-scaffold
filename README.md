@@ -48,10 +48,10 @@ strides.
                        +12% +10% +9% +8% +6% +5% +5% +5% +4% +3% +3% +3%
 ```
 
-You set the number of rungs, not a BPM step. **Auto** picks the fewest that keep the opening
-jump within about a tenth of the start tempo — at the bottom of the ladder the difficulty is
+You set how many **tempo steps** to take, not a BPM increment. **Auto** picks the fewest that
+keep the opening jump within about a tenth of the start tempo — at the bottom of the ladder the difficulty is
 still learning the notes rather than playing them fast, so the first stride has to stay
-within reach. Being relative to the range, it adapts on its own: a doubling needs 13 rungs,
+within reach. Being relative to the range, it adapts on its own: a doubling needs 13 steps,
 60→90 needs 7.
 
 Both constants live at the top of `src/sequence.ts` — `TAPER` (how much bigger the first
@@ -75,8 +75,9 @@ npm test           # the method, the cursor, and the page driven end to end
 npm run build      # static bundle in dist/
 ```
 
-While practising: `Space` starts and stops the click, `↑`/`↓` move a rung, `Shift`+`←`/`→` move
-a stage.
+While practising: `Space` starts and stops the click, `↑`/`↓` move a tempo step, `Shift`+`←`/`→`
+move a stage. On a window wider than 62rem the ladder sits beside the transport instead of
+folding away underneath it.
 
 ## Layout
 

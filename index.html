@@ -33,32 +33,37 @@
           <div class="field">
             <span class="label">Build from</span>
             <div class="segmented" role="radiogroup" aria-label="Build from">
-              <label><input type="radio" name="direction" value="top" /><span>The top</span></label>
-              <label><input type="radio" name="direction" value="bottom" /><span>The bottom</span></label>
+              <label><input type="radio" name="direction" value="top" /><span>Top</span></label>
+              <label><input type="radio" name="direction" value="bottom" /><span>Bottom</span></label>
             </div>
             <p class="hint" id="directionHint"></p>
           </div>
 
-          <div class="field">
-            <label for="startTempo">Start tempo</label>
-            <input id="startTempo" type="number" min="20" max="300" step="1" />
-            <p class="hint">BPM</p>
-          </div>
+          <fieldset class="group field--wide">
+            <legend>Tempo</legend>
+            <div class="group__fields">
+              <div class="field">
+                <label for="startTempo">Start</label>
+                <input id="startTempo" type="number" min="20" max="300" step="1" />
+                <p class="hint">BPM</p>
+              </div>
 
-          <div class="field">
-            <label for="targetTempo">Target tempo</label>
-            <input id="targetTempo" type="number" min="20" max="300" step="1" />
-            <p class="hint">BPM</p>
-          </div>
+              <div class="field">
+                <label for="targetTempo">Target</label>
+                <input id="targetTempo" type="number" min="20" max="300" step="1" />
+                <p class="hint">BPM</p>
+              </div>
 
-          <div class="field">
-            <div class="label-row">
-              <label for="rungs">Rungs</label>
-              <button type="button" id="rungsAuto" class="chip" aria-pressed="true">Auto</button>
+              <div class="field">
+                <div class="label-row">
+                  <label for="rungs">Tempo steps</label>
+                  <button type="button" id="rungsAuto" class="chip" aria-pressed="true">Auto</button>
+                </div>
+                <input id="rungs" type="number" min="2" max="30" step="1" />
+                <p class="hint" id="rungsHint"></p>
+              </div>
             </div>
-            <input id="rungs" type="number" min="2" max="30" step="1" />
-            <p class="hint" id="rungsHint"></p>
-          </div>
+          </fieldset>
 
           <div class="field">
             <label for="meter">Time signature</label>
@@ -80,6 +85,7 @@
 
       <!-- Session -->
       <section id="session" class="card" hidden>
+        <div class="session__main">
         <div class="now">
           <p class="now__chunk" id="nowChunk">bar 1</p>
           <div class="pips" id="pips" aria-hidden="true"></div>
@@ -88,7 +94,7 @@
           <p class="now__where">
             <span id="nowStage">Stage 1 of 4</span>
             <span class="dot">·</span>
-            <span id="nowRung">rung 1 of 16</span>
+            <span id="nowRung">step 1 of 13</span>
             <span class="badge" id="nowBadge" hidden>at target</span>
             <span class="badge badge--quiet" id="nowSubdivision" hidden></span>
           </p>
@@ -118,6 +124,8 @@
           </div>
         </div>
 
+        </div>
+
         <details class="ladder" id="ladderPanel">
           <summary>Ladder for this stage</summary>
           <div class="ladder__scroll">
@@ -131,7 +139,7 @@
         </details>
 
         <footer class="session__footer">
-          <button id="backToSetup" class="link">Change setup</button>
+          <button id="backToSetup" class="secondary">← Change setup</button>
           <p class="keys">
             <kbd>Space</kbd> start/stop · <kbd>↑</kbd><kbd>↓</kbd> tempo ·
             <kbd>⇧</kbd>+<kbd>←</kbd><kbd>→</kbd> stage

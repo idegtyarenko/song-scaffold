@@ -12,6 +12,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Under the jsdom environment `import.meta.url` is an http URL, so resolve from the root.
 const INDEX_HTML = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8');
 
+// jsdom has no layout, so it implements no scrolling. The ladder scrolls its current row
+// into view whenever it is open.
+Element.prototype.scrollIntoView = vi.fn();
+
 /** Every oscillator the metronome scheduled, in order. */
 let clicks: { frequency: number; at: number }[] = [];
 let audio: FakeAudioContext | null = null;
@@ -56,12 +60,49 @@ function runClock(seconds: number): void {
   }
 }
 
-async function bootApp(): Promise<void> {
+/**
+ * `vi.resetModules()` gives us a fresh module but the same jsdom `document`, so each boot
+ * would otherwise leave the previous instance's global key handler attached and firing at
+ * detached nodes. Track what main.ts registers and take it back down.
+ */
+let documentListeners: [string, EventListenerOrEventListenerObject][] = [];
+const addEventListenerForReal = document.addEventListener.bind(document);
+
+function trackDocumentListeners(): void {
+  for (const [type, listener] of documentListeners) document.removeEventListener(type, listener);
+  documentListeners = [];
+  document.addEventListener = ((
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ) => {
+    documentListeners.push([type, listener]);
+    addEventListenerForReal(type, listener, options);
+  }) as typeof document.addEventListener;
+}
+
+/** jsdom implements no media queries, so the layout breakpoint is stated per test. */
+function stubMatchMedia(wide: boolean): void {
+  vi.stubGlobal('matchMedia', (media: string) => ({
+    media,
+    matches: wide,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    onchange: null,
+    dispatchEvent: vi.fn(() => false),
+  }));
+}
+
+async function bootApp({ wide = false } = {}): Promise<void> {
   clicks = [];
   audio = null;
   localStorage.clear();
   vi.resetModules();
   vi.stubGlobal('AudioContext', FakeAudioContext);
+  stubMatchMedia(wide);
+  trackDocumentListeners();
   document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
   await import('./main');
 }
@@ -150,6 +191,7 @@ describe('the app', () => {
     setNumber('#rungs', 20);
 
     vi.resetModules();
+    trackDocumentListeners();
     document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
     await import('./main');
 
@@ -162,7 +204,7 @@ describe('the app', () => {
   it('previews the shape of the session before you commit to it', () => {
     setUp(4, 'top', 60, 90);
     expect(text('#setupPreview')).toBe(
-      '4 stages · 7 rungs from 60 to 90 BPM in each, opening at +12% and easing to the target.',
+      '4 stages · 7 steps from 60 to 90 BPM in each, opening at +12% and easing to the target.',
     );
     expect(text('#directionHint')).toContain('Start on bar 1');
   });
@@ -174,7 +216,7 @@ describe('the app', () => {
     expect(text('#nowChunk')).toBe('Play bar 1');
     expect(text('#nowTempo')).toBe('60');
     expect(text('#nowStage')).toBe('Stage 1 of 4');
-    expect(text('#nowRung')).toBe('rung 1 of 7');
+    expect(text('#nowRung')).toBe('step 1 of 7');
   });
 
   it('shows the whole stage-3 ladder, tail included', () => {
@@ -214,7 +256,7 @@ describe('the app', () => {
 
     click('#slower');
     expect(`${text('#nowTempo')} · ${text('#nowChunk')}`).toBe('73 · Play bars 2–3');
-    expect(text('#nowRung')).toBe('rung 3 of 9');
+    expect(text('#nowRung')).toBe('step 3 of 9');
   });
 
   it('drops back to the start tempo when you add a segment mid-climb', () => {
@@ -402,6 +444,19 @@ describe('the app', () => {
     expect(clicks.slice(0, 4).map((c) => c.frequency)).toEqual([1600, 900, 1200, 900]);
   });
 
+  it('leaves the ladder collapsed on a narrow window', () => {
+    setUp(4, 'top', 60, 90);
+    click('#begin');
+    expect($<HTMLDetailsElement>('#ladderPanel').open).toBe(false);
+  });
+
+  it('opens the ladder as a side column on a wide window', async () => {
+    await bootApp({ wide: true });
+    setUp(4, 'top', 60, 90);
+    click('#begin');
+    expect($<HTMLDetailsElement>('#ladderPanel').open).toBe(true);
+  });
+
   it('drives the transport from the keyboard', () => {
     setUp(4, 'top', 60, 90);
     click('#begin');
@@ -428,6 +483,7 @@ describe('the app', () => {
 
     // Same storage, fresh module and DOM.
     vi.resetModules();
+    trackDocumentListeners();
     document.body.innerHTML = INDEX_HTML.split('<body>')[1]!.split('</body>')[0]!;
     await import('./main');
 

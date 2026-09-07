@@ -50,7 +50,7 @@ body {
 }
 
 main {
-  max-width: 44rem;
+  max-width: 46rem;
   margin: 0 auto;
   padding: clamp(0.75rem, 3vw, 2rem);
 }
@@ -83,6 +83,29 @@ main {
 }
 
 .field--wide { grid-column: 1 / -1; }
+
+/* Start, target and the step count are one decision, so they read as one block. */
+.group {
+  margin: 0;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.group legend {
+  padding: 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.group__fields {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
 
 .field label,
 .field .label {
@@ -153,6 +176,7 @@ select {
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .segmented input:checked + span {
@@ -172,7 +196,15 @@ select {
   cursor: pointer;
 }
 
-.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+/* The user agent puts its own margin on a checkbox, which knocks it off the text's
+   centre line. Zero it and let flexbox do the aligning. */
+.check input {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
 
 .preview {
   margin: 1.5rem 0 1rem;
@@ -216,13 +248,9 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 
 #begin { width: 100%; }
 
-.link {
-  background: none;
-  border: none;
-  padding: 0.25rem 0;
-  min-height: 0;
-  color: var(--muted);
-  text-decoration: underline;
+.secondary {
+  border-color: var(--muted);
+  font-weight: 600;
 }
 
 /* --- Session: the now panel ---------------------------------------------- */
@@ -387,6 +415,37 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 /* --- Session: ladder ------------------------------------------------------ */
 
 .ladder { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 0.75rem; }
+
+/* Wide enough for two columns: the ladder stops being a drawer and just stays open
+   beside the transport, where it can be read without hiding the controls. */
+@media (min-width: 62rem) {
+  main { max-width: 70rem; }
+  #setup { max-width: 46rem; margin-inline: auto; }
+
+  #session {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    grid-template-rows: auto auto;
+    gap: 0 1.75rem;
+    align-items: start;
+  }
+
+  .session__main { grid-column: 1; grid-row: 1; }
+  .session__footer { grid-column: 1; grid-row: 2; }
+
+  .ladder {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  /* Still a heading, no longer a control — there is nothing to collapse into. */
+  .ladder summary { list-style: none; pointer-events: none; font-weight: 600; }
+  .ladder summary::-webkit-details-marker { display: none; }
+  .ladder__scroll { max-height: min(32rem, 70vh); }
+}
 
 .ladder summary {
   cursor: pointer;

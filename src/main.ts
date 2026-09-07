@@ -99,13 +99,13 @@ function writeRungsHint(): void {
   fields.rungsAuto.setAttribute('aria-pressed', String(settings.rungsIsAutomatic));
   fields.rungsAuto.classList.toggle('is-on', settings.rungsIsAutomatic);
   view.rungsHint.textContent = settings.rungsIsAutomatic
-    ? `Notches to the target, sized for the ${settings.startTempo}→${settings.targetTempo} range`
-    : 'Notches to the target · tap Auto to size them for the range again';
+    ? `Sized for the ${settings.startTempo}→${settings.targetTempo} range`
+    : 'Tap Auto to size for the range again';
 
   const ladder = tempoLadder(settings.startTempo, settings.targetTempo, settings.rungs);
   const firstJump = ladder.length > 1 ? (ladder[1]! - ladder[0]!) / ladder[0]! : 0;
   view.setupPreview.textContent =
-    `${settings.totalSegments} stages · ${ladder.length} rungs from ` +
+    `${settings.totalSegments} stages · ${ladder.length} steps from ` +
     `${settings.startTempo} to ${settings.targetTempo} BPM in each, ` +
     `opening at +${Math.round(firstJump * 100)}% and easing to the target.`;
 }
@@ -171,6 +171,18 @@ buttons.begin.addEventListener('click', () => {
 
 // --- Session view ---------------------------------------------------------
 
+/**
+ * A window wide enough for two columns shows the ladder beside the transport, where a
+ * collapsed drawer would make no sense. Narrow windows keep it as a drawer.
+ */
+const wideLayout = matchMedia('(min-width: 62rem)');
+
+function syncLadderLayout(): void {
+  if (wideLayout.matches) view.ladderPanel.open = true;
+}
+
+wideLayout.addEventListener('change', syncLadderLayout);
+
 function startSession(): void {
   session = new Session({
     totalSegments: settings.totalSegments,
@@ -184,6 +196,7 @@ function startSession(): void {
 
   setupView.hidden = true;
   sessionView.hidden = false;
+  syncLadderLayout();
   buildBeatRow();
   render();
   buttons.playPause.focus();
@@ -229,7 +242,7 @@ function render(): void {
   view.subdivisionBadge.hidden = subdivision === 1;
   view.subdivisionBadge.textContent = `+ ${meter.subdivisionWord ?? ''}`.trim();
   view.stage.textContent = `Stage ${state.stage} of ${settings.totalSegments}`;
-  view.rung.textContent = `rung ${state.rungIndex + 1} of ${ladder.length}`;
+  view.rung.textContent = `step ${state.rungIndex + 1} of ${ladder.length}`;
   view.badge.hidden = !rung.isTail;
   buttons.playPause.textContent = metronome!.isRunning ? 'Stop' : 'Start';
   buttons.playPause.classList.toggle('is-running', metronome!.isRunning);
@@ -255,7 +268,7 @@ function render(): void {
 
   view.live.textContent =
     `${describeChunk(rung.chunk)} at ${rung.tempo} BPM. ` +
-    `Stage ${state.stage} of ${settings.totalSegments}, rung ${state.rungIndex + 1} of ${ladder.length}.` +
+    `Stage ${state.stage} of ${settings.totalSegments}, step ${state.rungIndex + 1} of ${ladder.length}.` +
     (state.stageComplete && state.canGoToNextStage ? ' Stage complete — add the next segment.' : '');
 }
 
