@@ -1,0 +1,21 @@
+/* Collapsed it costs one small line, which is all the room the page has to spare. */
+.note { margin-top: 0.75rem; }
+
+.note__summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+.note__summary::-webkit-details-marker { display: none; }
+.note__summary::before { content: "\24D8\00A0"; }
+
+.note__body {
+  margin: 0.5rem 0 0;
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}

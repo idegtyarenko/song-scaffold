@@ -13,124 +13,8 @@
   </head>
   <body class="page">
     <main class="page__main">
-      <!-- Setup -->
-      <section class="card setup" id="setup">
-        <header class="masthead">
-          <h1 class="masthead__title">SongScaffold</h1>
-          <p class="masthead__lede">
-            <a
-              class="masthead__link"
-              id="methodLink"
-              href="https://mollygebrian.wordpress.com/wp-content/uploads/2020/06/the-amazing-list-of-practice-techniques-with-gingold-rhythms-1.pdf#page=4"
-              target="_blank"
-              rel="noreferrer"
-              >Dr. Molly Gebrian&rsquo;s Interleaved Clicking Up<span class="visually-hidden">
-                , described on page 4 of her practice techniques PDF, opens in a new
-                tab</span></a
-            >
-            for taking a hard passage up to tempo: add one segment at a time, and rotate
-            through overlapping chunks as the metronome climbs.
-          </p>
-          <p class="masthead__sources">
-            <a
-              class="masthead__link"
-              id="explainLink"
-              href="https://www.youtube.com/watch?v=75OWZAq-O4U"
-              target="_blank"
-              rel="noreferrer"
-              >She explains it on video</a
-            >
-            <span class="masthead__separator" aria-hidden="true">·</span>
-            <a
-              class="masthead__link"
-              id="demoLink"
-              href="https://www.youtube.com/watch?v=e08zFDnLOYY"
-              target="_blank"
-              rel="noreferrer"
-              >and demonstrates it</a
-            >
-          </p>
-        </header>
-
-        <div class="fields">
-          <div class="field">
-            <label class="field__label" for="totalSegments">Segments in the passage</label>
-            <input class="field__input" id="totalSegments" type="number" min="1" max="15" step="1" />
-            <p class="field__hint">How many bars or phrases you have split it into.</p>
-          </div>
-
-          <div class="field">
-            <span class="field__label">Build from</span>
-            <div class="choice" role="radiogroup" aria-label="Build from">
-              <label class="choice__option">
-                <input class="choice__input" type="radio" name="direction" value="top" />
-                <span class="choice__label">Top</span>
-              </label>
-              <label class="choice__option">
-                <input class="choice__input" type="radio" name="direction" value="bottom" />
-                <span class="choice__label">Bottom</span>
-              </label>
-            </div>
-            <p class="field__hint" id="directionHint"></p>
-          </div>
-
-          <fieldset class="group fields__item--wide">
-            <legend class="group__legend">Tempo</legend>
-            <div class="group__fields">
-              <div class="field">
-                <label class="field__label" for="startTempo">Start</label>
-                <input class="field__input" id="startTempo" type="number" min="20" max="300" step="1" />
-                <p class="field__hint">BPM</p>
-              </div>
-
-              <div class="field">
-                <label class="field__label" for="targetTempo">Target</label>
-                <input class="field__input" id="targetTempo" type="number" min="20" max="300" step="1" />
-                <p class="field__hint">BPM</p>
-              </div>
-
-              <div class="field">
-                <div class="field__header">
-                  <label class="field__label" for="rungs">Tempo steps</label>
-                  <button class="button button--chip" type="button" id="rungsAuto" aria-pressed="true">
-                    Auto
-                  </button>
-                </div>
-                <input class="field__input" id="rungs" type="number" min="2" max="30" step="1" />
-                <p class="field__hint" id="rungsHint"></p>
-              </div>
-            </div>
-            <details class="note" id="taperNote">
-              <summary class="note__summary">Why the steps aren&rsquo;t all 5 BPM</summary>
-              <p class="note__body">
-                Gebrian&rsquo;s instructions say to click up &ldquo;by 5s&rdquo;, a constant
-                increment. This app shrinks each increment as the tempo rises, because
-                difficulty near your top speed is asymptotic rather than proportional:
-                140&rarr;150 costs far more than 75&rarr;80 even though it is the smaller
-                jump. The long strides belong low down, where you are nowhere near your
-                limit &mdash; so the step count changes how many rungs there are, not how
-                evenly they are spaced.
-              </p>
-            </details>
-          </fieldset>
-
-          <div class="field">
-            <label class="field__label" for="meter">Time signature</label>
-            <select class="field__input" id="meter"></select>
-            <p class="field__hint" id="meterHint"></p>
-          </div>
-
-          <div class="fields__item--wide">
-            <label class="check">
-              <input class="check__box" id="countIn" type="checkbox" />
-              <span class="check__label">Count in one bar before each repetition</span>
-            </label>
-          </div>
-        </div>
-
-        <p class="setup__preview" id="setupPreview"></p>
-        <button class="button button--primary setup__submit" id="begin">Start practising</button>
-      </section>
+      <!-- Setup, and every screen after it: React renders here. -->
+      <div id="root"></div>
 
       <!-- Session -->
       <section class="card session" id="session" hidden>
@@ -208,9 +92,6 @@
         </footer>
       </section>
     </main>
-
-    <!-- The React root. The screens above move into it one at a time. -->
-    <div id="root"></div>
 
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,0 +1,35 @@
+/* A segmented control: real radios, hidden, with their labels doing the drawing. */
+.choice {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.choice__option {
+  flex: 1;
+  margin: 0;
+}
+
+.choice__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice__label {
+  display: block;
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  white-space: nowrap;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.choice__input:checked + .choice__label {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  font-weight: 650;
+}

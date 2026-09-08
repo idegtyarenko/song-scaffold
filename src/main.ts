@@ -1,19 +1,12 @@
 import './session-view.css';
 
 import { audio } from './audio/engine';
-import { METERS, findMeter, subdivisionAt, subdivisionSpan } from './meter';
+import { findMeter, subdivisionAt } from './meter';
 import { Metronome, type Beat } from './metronome';
 import { noteGlyph } from './notes';
-import { describeChunk, tempoLadder } from './sequence';
+import { describeChunk } from './sequence';
 import { Session } from './session';
-import {
-  DEFAULT_SETTINGS,
-  LIMITS,
-  load,
-  normalize,
-  save,
-  type Settings,
-} from './settings';
+import type { Settings } from './settings';
 
 // --- Elements -------------------------------------------------------------
 
@@ -23,19 +16,7 @@ const el = <T extends HTMLElement>(id: string): T => {
   return found as T;
 };
 
-const setupView = el('setup');
 const sessionView = el('session');
-
-const fields = {
-  totalSegments: el<HTMLInputElement>('totalSegments'),
-  startTempo: el<HTMLInputElement>('startTempo'),
-  targetTempo: el<HTMLInputElement>('targetTempo'),
-  rungs: el<HTMLInputElement>('rungs'),
-  rungsAuto: el<HTMLButtonElement>('rungsAuto'),
-  meter: el<HTMLSelectElement>('meter'),
-  countIn: el<HTMLInputElement>('countIn'),
-};
-const directionRadios = radios('direction');
 
 const view = {
   chunk: el('nowChunk'),
@@ -51,15 +32,10 @@ const view = {
   ladderPanel: el<HTMLDetailsElement>('ladderPanel'),
   fasterSub: el('fasterSub'),
   slowerSub: el('slowerSub'),
-  rungsHint: el('rungsHint'),
-  directionHint: el('directionHint'),
-  setupPreview: el('setupPreview'),
-  meterHint: el('meterHint'),
   subdivisionBadge: el('nowSubdivision'),
 };
 
 const buttons = {
-  begin: el<HTMLButtonElement>('begin'),
   playPause: el<HTMLButtonElement>('playPause'),
   faster: el<HTMLButtonElement>('faster'),
   slower: el<HTMLButtonElement>('slower'),
@@ -70,106 +46,12 @@ const buttons = {
 
 // --- State ----------------------------------------------------------------
 
-let settings: Settings = load();
+/** The settings the running session was opened with. */
+let settings: Settings;
 let session: Session | null = null;
 let metronome: Metronome | null = null;
-
-// --- Setup view -----------------------------------------------------------
-
-for (const meter of METERS) {
-  const option = document.createElement('option');
-  option.value = meter.id;
-  option.textContent = meter.label;
-  fields.meter.append(option);
-}
-
-function writeSetupForm(): void {
-  fields.totalSegments.value = String(settings.totalSegments);
-  fields.startTempo.value = String(settings.startTempo);
-  fields.targetTempo.value = String(settings.targetTempo);
-  fields.rungs.value = String(settings.rungs);
-  fields.meter.value = settings.meterId;
-  fields.countIn.checked = settings.countInBars > 0;
-  check(directionRadios, settings.backwards ? 'bottom' : 'top');
-
-  view.directionHint.textContent = directionHint();
-  view.meterHint.innerHTML = meterHint();
-  writeRungsHint();
-}
-
-function writeRungsHint(): void {
-  fields.rungsAuto.setAttribute('aria-pressed', String(settings.rungsIsAutomatic));
-  fields.rungsAuto.classList.toggle('button--chip-on', settings.rungsIsAutomatic);
-  view.rungsHint.textContent = settings.rungsIsAutomatic
-    ? `Sized for the ${settings.startTempo}→${settings.targetTempo} range`
-    : 'Tap Auto to size for the range again';
-
-  const ladder = tempoLadder(settings.startTempo, settings.targetTempo, settings.rungs);
-  const firstJump = ladder.length > 1 ? (ladder[1]! - ladder[0]!) / ladder[0]! : 0;
-  view.setupPreview.textContent =
-    `${settings.totalSegments} stages · ${ladder.length} steps from ` +
-    `${settings.startTempo} to ${settings.targetTempo} BPM in each, ` +
-    `opening at +${Math.round(firstJump * 100)}% and easing to the target.`;
-}
-
-function readSetupForm(): void {
-  settings = normalize({
-    ...settings,
-    totalSegments: number(fields.totalSegments, DEFAULT_SETTINGS.totalSegments),
-    startTempo: number(fields.startTempo, DEFAULT_SETTINGS.startTempo),
-    targetTempo: number(fields.targetTempo, DEFAULT_SETTINGS.targetTempo),
-    rungs: number(fields.rungs, DEFAULT_SETTINGS.rungs),
-    backwards: selected(directionRadios) === 'bottom',
-    meterId: fields.meter.value,
-    countInBars: fields.countIn.checked ? 1 : 0,
-  });
-  save(settings);
-}
-
-for (const input of [fields.totalSegments, fields.startTempo, fields.targetTempo]) {
-  input.addEventListener('input', () => {
-    readSetupForm();
-    if (settings.rungsIsAutomatic) fields.rungs.value = String(settings.rungs);
-    writeRungsHint();
-    view.directionHint.textContent = directionHint();
-  });
-  input.addEventListener('blur', writeSetupForm);
-}
-
-// Typing a rung count takes it off the automatic suggestion; Auto is the way back —
-// and it stays on screen, unlike the old "clear the box" trick, which nobody would find
-// once a stale preference had been persisted. The field is left alone while it has focus,
-// so a half-typed number is not clamped out from under the cursor.
-fields.rungs.addEventListener('input', () => {
-  settings.rungsIsAutomatic = false;
-  readSetupForm();
-  writeRungsHint();
-});
-
-fields.rungs.addEventListener('blur', writeSetupForm);
-
-fields.rungsAuto.addEventListener('click', () => {
-  settings.rungsIsAutomatic = true;
-  readSetupForm();
-  fields.rungs.value = String(settings.rungs);
-  writeRungsHint();
-});
-
-for (const input of [
-  ...directionRadios,
-  fields.meter,
-  fields.countIn,
-]) {
-  input.addEventListener('change', () => {
-    readSetupForm();
-    writeSetupForm();
-  });
-}
-
-buttons.begin.addEventListener('click', () => {
-  readSetupForm();
-  startSession();
-});
+/** What to call when the player leaves the session, so React can put the setup back. */
+let exit: (() => void) | null = null;
 
 // --- Session view ---------------------------------------------------------
 
@@ -185,7 +67,11 @@ function syncLadderLayout(): void {
 
 wideLayout.addEventListener('change', syncLadderLayout);
 
-function startSession(): void {
+/** Open a session on these settings and draw it. `onExit` fires when the player leaves. */
+export function startSession(next: Settings, onExit: () => void): void {
+  settings = next;
+  exit = onExit;
+
   session = new Session({
     totalSegments: settings.totalSegments,
     backwards: settings.backwards,
@@ -196,7 +82,6 @@ function startSession(): void {
 
   metronome = new Metronome(audio, clickConfig(session.state().rung.tempo), showBeat);
 
-  setupView.hidden = true;
   sessionView.hidden = false;
   syncLadderLayout();
   buildBeatRow();
@@ -204,14 +89,12 @@ function startSession(): void {
   buttons.playPause.focus();
 }
 
-function endSession(): void {
+/** Idempotent: React tears the session down again when it unmounts the screen. */
+export function endSession(): void {
   metronome?.stop();
   metronome = null;
   session = null;
   sessionView.hidden = true;
-  setupView.hidden = false;
-  writeSetupForm();
-  buttons.begin.focus();
 }
 
 /** The click grid for a tempo — the meter decides for itself whether to subdivide. */
@@ -376,7 +259,10 @@ buttons.prevStage.addEventListener('click', () => {
   session!.previousStage();
   apply();
 });
-buttons.backToSetup.addEventListener('click', endSession);
+buttons.backToSetup.addEventListener('click', () => {
+  endSession();
+  exit?.();
+});
 
 // Stage moves need Shift, so a mis-aimed arrow key cannot throw away a stage's work.
 const SHORTCUTS: Record<string, { shift: boolean; press: () => HTMLButtonElement }> = {
@@ -404,48 +290,6 @@ document.addEventListener('keydown', (event) => {
 
 // --- Boot -----------------------------------------------------------------
 
-function meterHint(): string {
-  const meter = findMeter(settings.meterId);
-  const span = subdivisionSpan(meter);
-  const beat = noteGlyph(meter.beatNote);
-  const counted = `Counted in ${meter.beatsPerBar} · tempo is ${beat} = BPM.`;
-  if (span === null) return counted;
-  return (
-    `${counted} The ${span.subdivision.word} click too up to ` +
-    `${beat}=${span.upTo}, then drop away so you can feel the pulse.`
-  );
-}
-
-function directionHint(): string {
-  return settings.backwards
-    ? `Start on segment ${settings.totalSegments} and add the segment before it each stage — ` +
-        'backward chaining, so you always end up in music you already know.'
-    : 'Start on segment 1 and add the next segment each stage.';
-}
-
 // The sound is unlocked by whichever gesture comes first, so pressing Start — or Space,
 // or a tempo arrow — plays immediately instead of losing its first bar to autoplay policy.
 audio.listenForGesture();
-
-fields.totalSegments.max = String(LIMITS.totalSegments.max);
-fields.rungs.max = String(LIMITS.rungs.max);
-writeSetupForm();
-
-// --- Small DOM helpers ----------------------------------------------------
-
-function radios(name: string): HTMLInputElement[] {
-  return [...document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)];
-}
-
-function selected(inputs: HTMLInputElement[]): string | undefined {
-  return inputs.find((input) => input.checked)?.value;
-}
-
-function check(inputs: HTMLInputElement[], value: string): void {
-  for (const input of inputs) input.checked = input.value === value;
-}
-
-function number(input: HTMLInputElement, fallback: number): number {
-  const parsed = Number.parseInt(input.value, 10);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}

@@ -1,0 +1,19 @@
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* The user agent puts its own margin on a checkbox, which knocks it off the text's
+   centre line. Zero it and let flexbox do the aligning. */
+.check__box {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.check__label { line-height: 1.2; }

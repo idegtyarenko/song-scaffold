@@ -1,0 +1,7 @@
+/* The one surface the screens sit on: everything else is drawn inside a card. */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(1rem, 3vw, 1.75rem);
+}

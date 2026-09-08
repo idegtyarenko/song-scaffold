@@ -37,6 +37,11 @@ export function noteWord(note: NoteValue): string {
   return WORDS[note];
 }
 
+/** What goes inside the `<svg>`, so the React glyph and the imperative one share shapes. */
+export function noteShape(note: NoteValue): string {
+  return SHAPES[note];
+}
+
 /** The glyph as inline SVG markup: inherits the surrounding colour and font size. */
 export function noteGlyph(note: NoteValue): string {
   return (

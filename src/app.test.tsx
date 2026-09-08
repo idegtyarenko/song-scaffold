@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 /**
- * Drives the real DOM through the real `main.ts` — the setup form, the four transport
- * buttons, the ladder table and the Web Audio wiring — so the app is verified as it runs
- * rather than as it reads.
+ * Drives the whole app as it runs: the React setup screen hands off to the session, which
+ * `main.ts` still draws imperatively, and the Web Audio wiring is watched on a fake clock.
+ * The setup form has its own tests in SetupScreen.test.tsx; what is checked here is the
+ * session it opens.
  */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Under the jsdom environment `import.meta.url` is an http URL, so resolve from the root.
@@ -97,6 +99,7 @@ function stubMatchMedia(wide: boolean): void {
 }
 
 async function bootApp({ wide = false } = {}): Promise<void> {
+  cleanup();
   clicks = [];
   audio = null;
   localStorage.clear();
@@ -104,8 +107,10 @@ async function bootApp({ wide = false } = {}): Promise<void> {
   vi.stubGlobal('AudioContext', FakeAudioContext);
   stubMatchMedia(wide);
   trackDocumentListeners();
+  // The session screen still comes from the page; React renders the rest into it.
   document.body.innerHTML = BODY_HTML;
-  await import('./main');
+  const { App } = await import('./App');
+  render(<App />);
 }
 
 const $ = <T extends HTMLElement>(selector: string): T => {
@@ -124,19 +129,27 @@ function readNotes(selector: string): string {
   }
   return node.textContent?.trim() ?? '';
 }
-const click = (selector: string) => $<HTMLButtonElement>(selector).click();
+const click = (selector: string) => fireEvent.click($<HTMLButtonElement>(selector));
 
+// The setup screen is React's, so its fields are set through Testing Library: assigning to
+// `input.value` updates React's own value tracker, which then swallows the event.
 function setNumber(selector: string, value: number): void {
   const input = $<HTMLInputElement>(selector);
-  input.value = String(value);
-  input.dispatchEvent(new Event('input', { bubbles: true }));
-  input.dispatchEvent(new Event('blur', { bubbles: true }));
+  fireEvent.change(input, { target: { value: String(value) } });
+  fireEvent.blur(input);
 }
 
 function choose(name: string, value: string): void {
-  const input = $<HTMLInputElement>(`input[name="${name}"][value="${value}"]`);
-  input.checked = true;
-  input.dispatchEvent(new Event('change', { bubbles: true }));
+  fireEvent.click($(`input[name="${name}"][value="${value}"]`));
+}
+
+function selectMeter(id: string): void {
+  fireEvent.change($('#meter'), { target: { value: id } });
+}
+
+function setCountIn(on: boolean): void {
+  const box = $<HTMLInputElement>('#countIn');
+  if (box.checked !== on) fireEvent.click(box);
 }
 
 /** The visible ladder, as `["60 · segments 1–3", ...]`. */
@@ -153,8 +166,7 @@ function setUp(segments: number, from: 'top' | 'bottom', start: number, target: 
   setNumber('#startTempo', start);
   setNumber('#targetTempo', target);
   setNumber('#rungs', 7); // 60, 67, 73, 79, 83, 87, 90 for a 60->90 range
-  $<HTMLSelectElement>('#meter').value = '4/4';
-  $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
+  selectMeter('4/4');
 }
 
 describe('the app', () => {
@@ -164,84 +176,8 @@ describe('the app', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.useRealTimers();
-  });
-
-  it('sizes the rung count to the tempo range until you say otherwise', () => {
-    setNumber('#startTempo', 60);
-    setNumber('#targetTempo', 90);
-    expect($<HTMLInputElement>('#rungs').value).toBe('7');
-
-    setNumber('#targetTempo', 120);
-    expect($<HTMLInputElement>('#rungs').value).toBe('13');
-
-    setNumber('#rungs', 5);
-    setNumber('#targetTempo', 90);
-    expect($<HTMLInputElement>('#rungs').value).toBe('5');
-    expect($('#rungsAuto').getAttribute('aria-pressed')).toBe('false');
-  });
-
-  it('hands the rung count back to the tempo range when you tap Auto', () => {
-    setNumber('#startTempo', 60);
-    setNumber('#targetTempo', 90);
-    setNumber('#rungs', 20);
-    expect($<HTMLInputElement>('#rungs').value).toBe('20');
-
-    click('#rungsAuto');
-    expect($<HTMLInputElement>('#rungs').value).toBe('7');
-    expect($('#rungsAuto').getAttribute('aria-pressed')).toBe('true');
-
-    setNumber('#targetTempo', 120);
-    expect($<HTMLInputElement>('#rungs').value).toBe('13');
-  });
-
-  it('shows a manual rung count as manual after a reload, and can still recover it', async () => {
-    setNumber('#startTempo', 60);
-    setNumber('#targetTempo', 90);
-    setNumber('#rungs', 20);
-
-    vi.resetModules();
-    trackDocumentListeners();
-    document.body.innerHTML = BODY_HTML;
-    await import('./main');
-
-    expect($<HTMLInputElement>('#rungs').value).toBe('20');
-    expect($('#rungsAuto').getAttribute('aria-pressed')).toBe('false');
-    click('#rungsAuto');
-    expect($<HTMLInputElement>('#rungs').value).toBe('7');
-  });
-
-  it('credits the method and points at Gebrian’s own sources', () => {
-    const link = (selector: string) => $<HTMLAnchorElement>(selector);
-    expect(link('#methodLink').textContent).toContain('Molly Gebrian');
-    // Page 4 is where she writes the method out; Part II explains it and Part III demos it.
-    expect(link('#methodLink').getAttribute('href')).toMatch(/\.pdf#page=4$/);
-    expect(link('#explainLink').getAttribute('href')).toContain('75OWZAq-O4U');
-    expect(link('#demoLink').getAttribute('href')).toContain('e08zFDnLOYY');
-    for (const selector of ['#methodLink', '#explainLink', '#demoLink']) {
-      expect(link(selector).getAttribute('rel')).toBe('noreferrer');
-      expect(link(selector).getAttribute('target')).toBe('_blank');
-    }
-  });
-
-  it('explains where the ladder departs from Gebrian’s instructions, without taking up room', () => {
-    const note = $<HTMLDetailsElement>('#taperNote');
-    expect(note.open).toBe(false);
-    const summary = note.querySelector('.note__summary')!.textContent!;
-    const body = note.querySelector('.note__body')!.textContent!.replace(/\s+/g, ' ');
-    // It must name the difference and give the reason, not just assert the difference.
-    expect(summary).toContain('5 BPM');
-    expect(body).toContain('by 5s');
-    expect(body).toContain('140');
-    expect(body).toMatch(/asymptotic|top speed/);
-  });
-
-  it('previews the shape of the session before you commit to it', () => {
-    setUp(4, 'top', 60, 90);
-    expect(text('#setupPreview')).toBe(
-      '4 stages · 7 steps from 60 to 90 BPM in each, opening at +12% and easing to the target.',
-    );
-    expect(text('#directionHint')).toContain('Start on segment 1');
   });
 
   it('opens the session on the first segment at the start tempo', () => {
@@ -362,8 +298,7 @@ describe('the app', () => {
 
   it('clicks a 4/4 bar with a count-in, and restarts on the downbeat at a new tempo', () => {
     setUp(4, 'top', 60, 90);
-    $<HTMLInputElement>('#countIn').checked = true;
-    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
+    setCountIn(true);
     click('#begin');
 
     click('#playPause');
@@ -392,8 +327,7 @@ describe('the app', () => {
 
   it('lights the beat dots and the bar you are on as the click sounds', () => {
     setUp(4, 'top', 60, 90);
-    $<HTMLInputElement>('#countIn').checked = false;
-    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
+    setCountIn(false);
     click('#begin');
     click('#nextStage');
     click('#nextStage'); // stage 3, chunk [1,2,3]
@@ -421,8 +355,7 @@ describe('the app', () => {
 
   it('accents 4/4 on one and three', () => {
     setUp(4, 'top', 60, 90);
-    $<HTMLInputElement>('#countIn').checked = false;
-    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
+    setCountIn(false);
     click('#begin');
     click('#playPause');
     runClock(5);
@@ -431,8 +364,7 @@ describe('the app', () => {
 
   it('draws the half note of 2/2, which no font would render', () => {
     setUp(4, 'top', 60, 90);
-    $<HTMLSelectElement>('#meter').value = '2/2';
-    $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
+    selectMeter('2/2');
     expect(readNotes('#meterHint')).toBe(
       'Counted in 2 · tempo is [half note] = BPM. The quarters click too up to ' +
         '[half note]=59, then drop away so you can feel the pulse.',
@@ -445,10 +377,8 @@ describe('the app', () => {
 
   it('subdivides 6/8 while it is slow and drops to the pulse once it is fast', () => {
     setUp(4, 'top', 60, 90);
-    $<HTMLInputElement>('#countIn').checked = false;
-    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
-    $<HTMLSelectElement>('#meter').value = '6/8';
-    $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
+    setCountIn(false);
+    selectMeter('6/8');
     expect(readNotes('#meterHint')).toBe(
       'Counted in 2 · tempo is [dotted quarter note] = BPM. The eighths click too up to ' +
         '[dotted quarter note]=80, then drop away so you can feel the pulse.',
@@ -484,8 +414,7 @@ describe('the app', () => {
 
   it('leaves a simple meter to its own pulse once it is at speed', () => {
     setUp(4, 'top', 60, 90);
-    $<HTMLInputElement>('#countIn').checked = false;
-    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
+    setCountIn(false);
     click('#begin');
     expect($('#nowSubdivision').hidden).toBe(true);
     click('#playPause');
@@ -495,8 +424,7 @@ describe('the app', () => {
 
   it('clicks the upbeats of a simple meter while the pulse is slower than a second', () => {
     setUp(4, 'top', 40, 90); // ladder: 40, 52, 62, 71, 79, 85, 90
-    $<HTMLInputElement>('#countIn').checked = false;
-    $('#countIn').dispatchEvent(new Event('change', { bubbles: true }));
+    setCountIn(false);
     expect(readNotes('#meterHint')).toBe(
       'Counted in 4 · tempo is [quarter note] = BPM. The eighths click too up to ' +
         '[quarter note]=59, then drop away so you can feel the pulse.',
@@ -562,29 +490,6 @@ describe('the app', () => {
     expect(text('#playPause')).toBe('Stop');
   });
 
-  it('remembers the setup across a reload', async () => {
-    setUp(7, 'bottom', 80, 120);
-    $<HTMLSelectElement>('#meter').value = '3/4';
-    $('#meter').dispatchEvent(new Event('change', { bubbles: true }));
-
-    // Same storage, fresh module and DOM.
-    vi.resetModules();
-    trackDocumentListeners();
-    document.body.innerHTML = BODY_HTML;
-    await import('./main');
-
-    expect($<HTMLInputElement>('#totalSegments').value).toBe('7');
-    expect($<HTMLInputElement>('#startTempo').value).toBe('80');
-    expect($<HTMLInputElement>('#targetTempo').value).toBe('120');
-    expect($<HTMLSelectElement>('#meter').value).toBe('3/4');
-    expect($<HTMLInputElement>('input[name="direction"][value="bottom"]').checked).toBe(true);
-  });
-
-  it('keeps the target at or above the start tempo', () => {
-    setUp(4, 'top', 100, 120);
-    setNumber('#targetTempo', 40);
-    expect($<HTMLInputElement>('#targetTempo').value).toBe('100');
-  });
 });
 
 function press(key: string, init: KeyboardEventInit = {}): void {
