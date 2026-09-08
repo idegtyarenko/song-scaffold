@@ -1,0 +1,6 @@
+# Build output and the lockfile are machine-written; Prettier has no say in them.
+dist/
+package-lock.json
+
+# Everything else is decided by git: the scripts also pass .gitignore and .git/info/exclude
+# as ignore files, so a directory that is not part of the repository is not formatted either.

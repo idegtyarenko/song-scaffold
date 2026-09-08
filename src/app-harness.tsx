@@ -38,6 +38,9 @@ class FakeAudioContext {
   currentTime = 0;
 
   constructor() {
+    // The rule is aimed at `const self = this` closures; here the double hands itself to the
+    // test so the assertions can read what was scheduled.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     context = this;
   }
 

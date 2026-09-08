@@ -45,7 +45,11 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
   const [session] = useState(() => new Session({ ...settings }));
   const [cursor, setCursor] = useState(() => session.state());
   const [running, setRunning] = useState(false);
+  // The compiler rules read this as render-time work: two functions declared below, one of
+  // which touches refs. Neither runs during render — the initialiser runs once, and `showBeat`
+  // only ever runs from a scheduled beat, which is exactly why it goes through refs.
   const [metronome] = useState(
+    // eslint-disable-next-line react-hooks/refs, react-hooks/immutability
     () => new Metronome(audio, clickConfig(cursor.rung.tempo), showBeat),
   );
 

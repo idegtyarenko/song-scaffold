@@ -79,6 +79,8 @@ happens.
 npm install
 npm run dev        # http://localhost:5173/song-scaffold/
 npm test           # the method, the cursor, and the page driven end to end
+npm run lint       # ESLint, including the React hook rules
+npm run format     # Prettier over everything git tracks (`format:check` to only report)
 npm run build      # static bundle in dist/
 ```
 
