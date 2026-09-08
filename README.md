@@ -92,10 +92,14 @@ folding away underneath it.
 | ---- | ------------- |
 | `src/sequence.ts` | the rotation, the tempo ladder, the backwards mirror. Pure. |
 | `src/session.ts` | the stage/rung cursor behind the four transport buttons. Pure. |
-| `src/metronome.ts` | Web Audio lookahead scheduler. The only part that touches the clock. |
+| `src/audio/engine.ts` | the one `AudioContext`, and the gesture that unlocks it. |
+| `src/metronome.ts` | Web Audio lookahead scheduler, on the engine's clock. |
 | `src/meter.ts` | time signatures and their accent patterns. |
 | `src/settings.ts` | setup defaults, clamping, `localStorage`. |
 | `src/main.ts` | DOM wiring. |
+
+Everything that sounds is handed the same engine, so the click and anything played beside it
+stand on one clock.
 
 Tests: `sequence.test.ts` and `session.test.ts` pin the method itself; `metronome.test.ts`
 drives the scheduler against a fake audio clock; `app.test.ts` drives the

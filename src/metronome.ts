@@ -1,12 +1,14 @@
 /**
  * A Web Audio metronome.
  *
- * Clicks are scheduled a little ahead of time against `AudioContext.currentTime`, because
+ * Clicks are scheduled a little ahead of time against the engine's clock, because
  * `setInterval` alone drifts audibly under any main-thread load. The interval only tops up
  * a short scheduling horizon; the audio clock does the timekeeping.
  *
  * Knows nothing about stages or chunks — it clicks, and reports the beats it played.
  */
+
+import type { AudioEngine } from './audio/engine';
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_HORIZON_S = 0.1;
@@ -43,7 +45,6 @@ const TONES: Record<Accent, { frequency: number; gain: number }> = {
 };
 
 export class Metronome {
-  private context: AudioContext | null = null;
   private timer: number | null = null;
   private frame: number | null = null;
   private config: MetronomeConfig;
@@ -54,6 +55,7 @@ export class Metronome {
   private pending: { beat: Beat; time: number }[] = [];
 
   constructor(
+    private readonly engine: AudioEngine,
     config: MetronomeConfig,
     private readonly onBeat: (beat: Beat) => void,
   ) {
@@ -64,13 +66,14 @@ export class Metronome {
     return this.timer !== null;
   }
 
-  /** Must be called from a user gesture the first time, to satisfy autoplay policy. */
+  /**
+   * Starts clicking. The engine is what satisfies the autoplay policy, so a start outside a
+   * user gesture is silent until one arrives rather than an error here.
+   */
   start(): void {
     if (this.isRunning) return;
-    const context = this.ensureContext();
-    void context.resume();
     this.tick = 0;
-    this.nextBeatTime = context.currentTime + 0.08;
+    this.nextBeatTime = this.engine.currentTime + 0.08;
     this.timer = window.setInterval(() => this.schedule(), LOOKAHEAD_MS);
     this.frame = requestAnimationFrame(() => this.flushPending());
     this.schedule();
@@ -93,21 +96,16 @@ export class Metronome {
     if (!this.isRunning) return;
     this.silencePending();
     this.tick = 0;
-    this.nextBeatTime = this.ensureContext().currentTime + 0.08;
+    this.nextBeatTime = this.engine.currentTime + 0.08;
     this.schedule();
   }
 
-  private ensureContext(): AudioContext {
-    this.context ??= new AudioContext();
-    return this.context;
-  }
-
   private schedule(): void {
-    const context = this.ensureContext();
+    const now = this.engine.currentTime;
     const interval = 60 / (this.config.tempo * this.config.subdivision);
-    while (this.nextBeatTime < context.currentTime + SCHEDULE_HORIZON_S) {
+    while (this.nextBeatTime < now + SCHEDULE_HORIZON_S) {
       const beat = this.describe(this.tick);
-      this.click(context, this.nextBeatTime, beat.accent, beat.isCountIn);
+      this.click(this.nextBeatTime, beat.accent, beat.isCountIn);
       this.pending.push({ beat, time: this.nextBeatTime });
       this.nextBeatTime += interval;
       this.tick++;
@@ -136,10 +134,10 @@ export class Metronome {
     };
   }
 
-  private click(context: AudioContext, at: number, accent: Accent, isCountIn: boolean): void {
+  private click(at: number, accent: Accent, isCountIn: boolean): void {
     const { frequency, gain } = TONES[accent];
-    const oscillator = context.createOscillator();
-    const envelope = context.createGain();
+    const oscillator = this.engine.context.createOscillator();
+    const envelope = this.engine.context.createGain();
 
     oscillator.type = 'square';
     // The count-in sits a fifth below the music, so it is unmistakable without being a
@@ -149,7 +147,7 @@ export class Metronome {
     envelope.gain.linearRampToValueAtTime(gain, at + 0.002);
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.05);
 
-    oscillator.connect(envelope).connect(context.destination);
+    oscillator.connect(envelope).connect(this.engine.output);
     oscillator.start(at);
     oscillator.stop(at + 0.06);
     this.scheduled.push(oscillator);
@@ -170,7 +168,7 @@ export class Metronome {
    * update — and the backlog flushes in one pass when the tab comes back.
    */
   private flushPending(): void {
-    const now = this.context?.currentTime ?? 0;
+    const now = this.engine.currentTime;
     while (this.pending.length > 0 && this.pending[0]!.time <= now) {
       try {
         this.onBeat(this.pending.shift()!.beat);

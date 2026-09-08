@@ -1,5 +1,6 @@
 import './styles.css';
 
+import { audio } from './audio/engine';
 import { METERS, findMeter, subdivisionAt, subdivisionSpan } from './meter';
 import { Metronome, type Beat } from './metronome';
 import { noteGlyph } from './notes';
@@ -193,7 +194,7 @@ function startSession(): void {
     rungs: settings.rungs,
   });
 
-  metronome = new Metronome(clickConfig(session.state().rung.tempo), showBeat);
+  metronome = new Metronome(audio, clickConfig(session.state().rung.tempo), showBeat);
 
   setupView.hidden = true;
   sessionView.hidden = false;
@@ -421,6 +422,10 @@ function directionHint(): string {
         'backward chaining, so you always end up in music you already know.'
     : 'Start on segment 1 and add the next segment each stage.';
 }
+
+// The sound is unlocked by whichever gesture comes first, so pressing Start — or Space,
+// or a tempo arrow — plays immediately instead of losing its first bar to autoplay policy.
+audio.listenForGesture();
 
 fields.totalSegments.max = String(LIMITS.totalSegments.max);
 fields.rungs.max = String(LIMITS.rungs.max);

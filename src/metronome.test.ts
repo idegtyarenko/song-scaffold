@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AudioEngine } from './audio/engine';
 import { Metronome, type Beat, type MetronomeConfig } from './metronome';
 
 /** Clicks the metronome scheduled, in order. */
 let clicks: { frequency: number; at: number }[] = [];
 let audio: FakeAudioContext;
+let engine: AudioEngine;
 
 class FakeAudioContext {
   currentTime = 0;
@@ -57,6 +59,7 @@ describe('Metronome', () => {
     clicks = [];
     vi.useFakeTimers();
     vi.stubGlobal('AudioContext', FakeAudioContext);
+    engine = new AudioEngine();
   });
 
   afterEach(() => {
@@ -66,7 +69,7 @@ describe('Metronome', () => {
 
   it('reports every beat of the bar, in order, as it sounds', () => {
     const beats: Beat[] = [];
-    const metronome = new Metronome(FOUR_FOUR, (beat) => beats.push(beat));
+    const metronome = new Metronome(engine, FOUR_FOUR, (beat) => beats.push(beat));
     metronome.start();
     runClock(4.2);
     metronome.stop();
@@ -82,7 +85,7 @@ describe('Metronome', () => {
     const reported = vi.spyOn(console, 'error').mockImplementation(() => {});
     const beats: Beat[] = [];
     let failures = 0;
-    const metronome = new Metronome(FOUR_FOUR, (beat) => {
+    const metronome = new Metronome(engine, FOUR_FOUR, (beat) => {
       // The display is driven entirely by this callback, so one bad beat must not be
       // allowed to stop the loop for the rest of the session.
       if (beat.beat === 1 && failures++ === 0) throw new Error('listener blew up');
@@ -101,7 +104,9 @@ describe('Metronome', () => {
 
   it('counts the count-in bar separately from the music', () => {
     const beats: Beat[] = [];
-    const metronome = new Metronome({ ...FOUR_FOUR, countInBars: 1 }, (b) => beats.push(b));
+    const metronome = new Metronome(engine, { ...FOUR_FOUR, countInBars: 1 }, (b) =>
+      beats.push(b),
+    );
     metronome.start();
     runClock(8.2);
     metronome.stop();
@@ -114,6 +119,7 @@ describe('Metronome', () => {
   it('subdivides a compound pulse and marks which clicks are the beat', () => {
     const beats: Beat[] = [];
     const metronome = new Metronome(
+      engine,
       { tempo: 60, beatsPerBar: 2, secondaryAccents: [], subdivision: 3, countInBars: 0 },
       (b) => beats.push(b),
     );
@@ -133,7 +139,7 @@ describe('Metronome', () => {
 
   it('stops reporting once stopped', () => {
     const beats: Beat[] = [];
-    const metronome = new Metronome(FOUR_FOUR, (b) => beats.push(b));
+    const metronome = new Metronome(engine, FOUR_FOUR, (b) => beats.push(b));
     metronome.start();
     runClock(2.2);
     const delivered = beats.length;
