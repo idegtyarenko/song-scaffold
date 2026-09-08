@@ -1,9 +1,9 @@
 {
-  "name": "interleaved-clicking-up",
+  "name": "song-scaffold",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A practice metronome implementing Dr. Molly Gebrian's Interleaved Clicking Up method",
+  "description": "A tool for taking a hard passage apart and building it back up to tempo",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

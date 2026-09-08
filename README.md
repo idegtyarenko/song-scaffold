@@ -1,8 +1,9 @@
-# Interleaved Clicking Up
+# SongScaffold
 
-A practice metronome for Dr. Molly Gebrian's **Interleaved Clicking Up #1** — the method for
-taking a hard passage up to tempo from *Learn Faster, Perform Better: A Musician's Guide to the
-Neuroscience of Practicing* (Oxford University Press, 2024), ch. 16.
+A tool for taking a hard passage apart and building it back up to tempo. Today it does that
+one way: as a practice metronome for Dr. Molly Gebrian's **Interleaved Clicking Up #1**, the
+method from *Learn Faster, Perform Better: A Musician's Guide to the Neuroscience of
+Practicing* (Oxford University Press, 2024), ch. 16.
 
 ## The method
 
@@ -76,7 +77,7 @@ happens.
 
 ```sh
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:5173/song-scaffold/
 npm test           # the method, the cursor, and the page driven end to end
 npm run build      # static bundle in dist/
 ```

@@ -33,7 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   countInBars: 1,
 };
 
-const STORAGE_KEY = 'interleaved-clicking-up:settings';
+const STORAGE_KEY = 'song-scaffold:settings';
 
 /** Clamp everything into range and keep the target at or above the start. */
 export function normalize(settings: Settings): Settings {
