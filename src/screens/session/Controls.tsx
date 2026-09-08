@@ -106,7 +106,7 @@ function Action({ shortcut, name, sub, large, disabled, suggested, onClick }: Ac
       disabled={disabled}
       onClick={onClick}
     >
-      <span className="controls__key">{shortcut}</span>
+      <span className="controls__key keyboard-only">{shortcut}</span>
       <span
         className={['controls__name', large && 'controls__name--large'].filter(Boolean).join(' ')}
       >

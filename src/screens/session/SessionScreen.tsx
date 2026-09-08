@@ -191,7 +191,7 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
         <Button variant="secondary" onClick={onExit}>
           ← Change setup
         </Button>
-        <p className="keys">
+        <p className="keys keyboard-only">
           <kbd className="keys__key">Space</kbd> start/stop · <kbd className="keys__key">↑</kbd>
           <kbd className="keys__key">↓</kbd> tempo · <kbd className="keys__key">⇧</kbd>+
           <kbd className="keys__key">←</kbd>
