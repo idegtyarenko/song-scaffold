@@ -8,7 +8,7 @@
  * Knows nothing about stages or chunks — it clicks, and reports the beats it played.
  */
 
-import type { AudioEngine } from './audio/engine';
+import type { AudioEngine } from './engine';
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_HORIZON_S = 0.1;

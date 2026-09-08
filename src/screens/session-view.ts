@@ -1,12 +1,18 @@
+/**
+ * The practice session screen, still drawn by hand against the markup in index.html.
+ * App opens it with `startSession` and closes it with `endSession`; it moves to React in
+ * the next steps of the migration, which is when this file goes away.
+ */
+
 import './session-view.css';
 
-import { audio } from './audio/engine';
-import { findMeter, subdivisionAt } from './meter';
-import { Metronome, type Beat } from './metronome';
-import { noteGlyph } from './notes';
-import { describeChunk } from './sequence';
-import { Session } from './session';
-import type { Settings } from './settings';
+import { audio } from '../audio/engine';
+import { Metronome, type Beat } from '../audio/metronome';
+import { findMeter, subdivisionAt } from '../model/meter';
+import { describeChunk } from '../practice/sequence';
+import { Session } from '../practice/session';
+import type { Settings } from '../practice/settings';
+import { noteGlyphMarkup } from '../ui/NoteGlyph';
 
 // --- Elements -------------------------------------------------------------
 
@@ -123,7 +129,7 @@ function render(): void {
 
   view.chunk.textContent = `Play ${describeChunk(rung.chunk)}`;
   view.tempo.textContent = String(rung.tempo);
-  view.beatName.innerHTML = noteGlyph(meter.beatNote);
+  view.beatName.innerHTML = noteGlyphMarkup(meter.beatNote);
   view.subdivisionBadge.hidden = subdivision === null;
   view.subdivisionBadge.textContent = `+ ${subdivision?.word ?? ''}`.trim();
   view.stage.textContent = `Stage ${state.stage} of ${settings.totalSegments}`;

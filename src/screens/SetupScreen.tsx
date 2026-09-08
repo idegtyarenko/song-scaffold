@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
 import './SetupScreen.css';
-import { METERS, findMeter, subdivisionSpan } from './meter';
-import { tempoLadder } from './sequence';
-import { DEFAULT_SETTINGS, LIMITS, load, normalize, save, type Settings } from './settings';
-import { Button } from './ui/Button';
-import { Card } from './ui/Card';
-import { Checkbox } from './ui/Checkbox';
-import { Field } from './ui/Field';
-import { Note } from './ui/Note';
-import { NoteGlyph } from './ui/NoteGlyph';
-import { RadioGroup } from './ui/RadioGroup';
+import { METERS, findMeter, subdivisionSpan } from '../model/meter';
+import { tempoLadder } from '../practice/sequence';
+import { DEFAULT_SETTINGS, LIMITS, load, normalize, save, type Settings } from '../practice/settings';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { Checkbox } from '../ui/Checkbox';
+import { Field } from '../ui/Field';
+import { Note } from '../ui/Note';
+import { NoteGlyph } from '../ui/NoteGlyph';
+import { RadioGroup } from '../ui/RadioGroup';
 
 interface SetupScreenProps {
   onStart: (settings: Settings) => void;

@@ -1,6 +1,6 @@
 /** Setup form values: defaults, validation and persistence. */
 
-import { DEFAULT_METER_ID, findMeter } from './meter';
+import { DEFAULT_METER_ID, findMeter } from '../model/meter';
 import { suggestRungs } from './sequence';
 
 export interface Settings {

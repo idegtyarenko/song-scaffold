@@ -1,6 +1,6 @@
 /*
  * The practice session screen: what to play, how fast, and the controls that move you.
- * Still drawn imperatively by main.ts, so this file is one stylesheet rather than one per
+ * Still drawn imperatively by session-view.ts, so this is one stylesheet rather than one per
  * component; it splits up when the screen does.
  */
 

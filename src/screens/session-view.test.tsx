@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 /**
  * Drives the whole app as it runs: the React setup screen hands off to the session, which
- * `main.ts` still draws imperatively, and the Web Audio wiring is watched on a fake clock.
- * The setup form has its own tests in SetupScreen.test.tsx; what is checked here is the
- * session it opens.
+ * session-view.ts still draws imperatively, and the Web Audio wiring is watched on a fake
+ * clock. The setup form has its own tests in SetupScreen.test.tsx; what is checked here is
+ * the session it opens.
  */
 
 import { readFileSync } from 'node:fs';
@@ -66,7 +66,7 @@ function runClock(seconds: number): void {
 /**
  * `vi.resetModules()` gives us a fresh module but the same jsdom `document`, so each boot
  * would otherwise leave the previous instance's global key handler attached and firing at
- * detached nodes. Track what main.ts registers and take it back down.
+ * detached nodes. Track what the screen registers and take it back down.
  */
 let documentListeners: [string, EventListenerOrEventListenerObject][] = [];
 const addEventListenerForReal = document.addEventListener.bind(document);
@@ -109,7 +109,7 @@ async function bootApp({ wide = false } = {}): Promise<void> {
   trackDocumentListeners();
   // The session screen still comes from the page; React renders the rest into it.
   document.body.innerHTML = BODY_HTML;
-  const { App } = await import('./App');
+  const { App } = await import('../App');
   render(<App />);
 }
 

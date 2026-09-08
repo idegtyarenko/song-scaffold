@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AudioEngine } from './audio/engine';
+import { AudioEngine } from './engine';
 import { Metronome, type Beat, type MetronomeConfig } from './metronome';
 
 /** Clicks the metronome scheduled, in order. */

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 
-// The session screen has not moved yet: it is still drawn imperatively by main.ts against
+// The session screen has not moved yet: session-view.ts still draws it imperatively against
 // the markup in index.html. React owns the setup screen and hands the session its settings.
-import { endSession, startSession } from './main';
-import { SetupScreen } from './SetupScreen';
-import type { Settings } from './settings';
+import { endSession, startSession } from './screens/session-view';
+import { SetupScreen } from './screens/SetupScreen';
+import type { Settings } from './practice/settings';
 
 export function App() {
   const [running, setRunning] = useState<Settings | null>(null);
