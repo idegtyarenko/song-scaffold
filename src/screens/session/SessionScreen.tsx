@@ -78,10 +78,20 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
     segments.current?.markBar(beat.isCountIn ? -1 : beat.bar % chunkBars.current);
   }
 
-  /** The one way the cursor moves: act, re-read it, and take the metronome with it. */
+  /**
+   * The one way the cursor moves: act, re-read it, and take the metronome with it.
+   *
+   * A step that lands where it started is not a move. The buttons are disabled at the ends
+   * of the ladder, but the keys are not, and restarting the click there would drop a
+   * count-in into the middle of a repetition. The check lives here rather than in the four
+   * moves, so the fifth one cannot forget it.
+   */
   function move(step: () => void): void {
+    const before = session.state();
     step();
     const next = session.state();
+    if (next.stage === before.stage && next.rungIndex === before.rungIndex) return;
+
     chunkBars.current = next.rung.chunk.length;
     segments.current?.markBar(-1);
     metronome.reconfigure(clickConfig(next.rung.tempo));

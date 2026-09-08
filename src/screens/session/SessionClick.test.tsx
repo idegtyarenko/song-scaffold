@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
  * The click of a running session, watched on a fake clock: the count-in, the accents of a
- * meter, the subdivisions that come and go with the tempo, and what a move does to the bar
- * that is already sounding.
+ * meter, the subdivisions that come and go with the tempo, and what a move — or a move that
+ * goes nowhere — does to the bar that is already sounding.
  *
  * The same vocabulary as SessionScreen.test.tsx, which is where the rest of the session is
  * worked; see `app-harness.tsx`. Clicks are read as the pitches they were scheduled at and
@@ -24,6 +24,7 @@ import {
   heard,
   litBeat,
   marks,
+  press,
   runClock,
   segments,
   setUp,
@@ -70,6 +71,57 @@ describe('the click of a practice session', () => {
 
     click('Stop');
     expect(button('Start')).toBeTruthy();
+  });
+
+  /**
+   * A key at the edge of the ladder moves nothing, so the click must carry on: no count-in
+   * tone (a fifth below the music), and every beat still on the same grid rather than the
+   * bar restarting a fraction of a second after the press.
+   */
+  function expectClickUndisturbed(secondsPerBeat: number): void {
+    expect(clicks().length).toBeGreaterThan(1);
+    expect(heard().every((frequency) => [1600, 1200, 900].includes(frequency))).toBe(true);
+    for (const [index, sounded] of clicks().slice(1).entries()) {
+      expect(sounded.at - clicks()[index]!.at).toBeCloseTo(secondsPerBeat, 5);
+    }
+  }
+
+  /** Press a key mid-repetition and listen to the three seconds that follow. */
+  function afterPressing(key: string, init: KeyboardEventInit = {}): void {
+    forgetClicks();
+    press(key, init);
+    runClock(3);
+  }
+
+  it('takes no notice of ↓ or ⇧← at the bottom of the first stage', () => {
+    begin({ countIn: true });
+    click('Start');
+    runClock(5); // the count-in bar, and into the music
+
+    afterPressing('ArrowDown');
+    expectClickUndisturbed(1);
+    afterPressing('ArrowLeft', { shiftKey: true });
+    expectClickUndisturbed(1);
+    expect(tempo()).toBe(60);
+    expect(shown()).toContain('Stage 1 of 4');
+  });
+
+  it('takes no notice of ↑ or ⇧→ at the top of the last stage', () => {
+    begin({ countIn: true });
+    for (let i = 0; i < 3; i++) press('ArrowRight', { shiftKey: true });
+    while (!button(/Faster/).disabled) press('ArrowUp');
+    expect(shown()).toContain('Stage 4 of 4');
+    expect(tempo()).toBe(90);
+
+    click('Start');
+    runClock(4); // the count-in bar at 90, and into the music
+
+    afterPressing('ArrowUp');
+    expectClickUndisturbed(60 / 90);
+    afterPressing('ArrowRight', { shiftKey: true });
+    expectClickUndisturbed(60 / 90);
+    expect(tempo()).toBe(90);
+    expect(shown()).toContain('Stage 4 of 4');
   });
 
   it('lights the beat dots and the bar you are on as the click sounds', () => {
