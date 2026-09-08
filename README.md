@@ -58,8 +58,8 @@ still learning the notes rather than playing them fast, so the first stride has 
 within reach. Being relative to the range, it adapts on its own: a doubling needs 13 steps,
 60→90 needs 7.
 
-Both constants live at the top of `src/sequence.ts` — `TAPER` (how much bigger the first
-increment is than the last, 2.5) and `MAX_FIRST_JUMP` (0.12).
+Both constants live at the top of `src/practice/sequence.ts` — `TAPER` (how much bigger the
+first increment is than the last, 2.5) and `MAX_FIRST_JUMP` (0.12).
 
 ## Time signatures
 
@@ -88,26 +88,31 @@ folding away underneath it.
 
 ## Layout
 
-| file | what it holds |
-| ---- | ------------- |
-| `src/sequence.ts` | the rotation, the tempo ladder, the backwards mirror. Pure. |
-| `src/session.ts` | the stage/rung cursor behind the four transport buttons. Pure. |
-| `src/audio/engine.ts` | the one `AudioContext`, and the gesture that unlocks it. |
-| `src/metronome.ts` | Web Audio lookahead scheduler, on the engine's clock. |
-| `src/meter.ts` | time signatures and their accent patterns. |
-| `src/settings.ts` | setup defaults, clamping, `localStorage`. |
-| `src/main.tsx` | the entry: mounts the React root and, for now, the old wiring. |
-| `src/App.tsx` | the React root. Empty until the screens move into it. |
-| `src/main.ts` | DOM wiring. Being replaced by React one screen at a time. |
+`src/` is laid out by layer, and the layering is enforced rather than remembered:
+`src/layers.test.ts` reads the imports back and fails on one pointing the wrong way.
+
+| folder | what lives there |
+| ------ | ---------------- |
+| `model/` | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`). Pure. |
+| `practice/` | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four transport buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio. |
+| `audio/` | the one `AudioContext` and the gesture that unlocks it (`engine.ts`), and the lookahead scheduler that clicks on its clock (`metronome.ts`). Knows nothing of the method. |
+| `ui/` | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet. |
+| `screens/` | whole screens: `SetupScreen.tsx` in React, and `session-view.ts`, the practice session still drawn by hand against the markup in `index.html` and being replaced one piece at a time. |
+| `App.tsx`, `main.tsx` | the entry: mounts the React root, and switches between the setup screen and the session. |
 
 Everything that sounds is handed the same engine, so the click and anything played beside it
 stand on one clock.
 
-Tests: `sequence.test.ts` and `session.test.ts` pin the method itself; `metronome.test.ts`
-drives the scheduler against a fake audio clock; `app.test.ts` drives the
-real page through the real `main.ts` under jsdom, with a stub `AudioContext`, so the form, the
-four transport buttons, the ladder, the beat display and the click scheduling are all exercised
-as they run. Only whether it *sounds* right needs your ears.
+Tests sit beside what they test. `sequence.test.ts` and `session.test.ts` pin the method
+itself; `engine.test.ts` and `metronome.test.ts` drive the audio against a fake clock;
+`SetupScreen.test.tsx` and `session-view.test.tsx` drive the real screens under jsdom with a
+stub `AudioContext`, so the form, the transport buttons, the ladder, the beat display and the
+click scheduling are all exercised as they run. Only whether it *sounds* right needs your ears.
+
+Two tests are about the tree rather than any one file: `layers.test.ts` for the layering above,
+and `structure.test.ts` for size — a file over 300 lines (a test over 400) or a folder over 12
+entries fails until the exception is written down with a reason and a ceiling, and then says so
+on every run.
 
 ## Not implemented
 
