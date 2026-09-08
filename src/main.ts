@@ -1,5 +1,3 @@
-import './styles.css';
-
 import { audio } from './audio/engine';
 import { METERS, findMeter, subdivisionAt, subdivisionSpan } from './meter';
 import { Metronome, type Beat } from './metronome';

@@ -96,7 +96,9 @@ folding away underneath it.
 | `src/metronome.ts` | Web Audio lookahead scheduler, on the engine's clock. |
 | `src/meter.ts` | time signatures and their accent patterns. |
 | `src/settings.ts` | setup defaults, clamping, `localStorage`. |
-| `src/main.ts` | DOM wiring. |
+| `src/main.tsx` | the entry: mounts the React root and, for now, the old wiring. |
+| `src/App.tsx` | the React root. Empty until the screens move into it. |
+| `src/main.ts` | DOM wiring. Being replaced by React one screen at a time. |
 
 Everything that sounds is handed the same engine, so the click and anything played beside it
 stand on one clock.
