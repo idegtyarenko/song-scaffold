@@ -10,6 +10,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { Profiler } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -100,6 +101,9 @@ function stubMatchMedia(wide: boolean): void {
   }));
 }
 
+/** Commits React has made since the app booted — one per render that reached the DOM. */
+let commits = 0;
+
 async function bootApp({ wide = false } = {}): Promise<void> {
   cleanup();
   clicks = [];
@@ -112,7 +116,12 @@ async function bootApp({ wide = false } = {}): Promise<void> {
   // Nothing but #root comes from the page now; React renders every screen into it.
   document.body.innerHTML = BODY_HTML;
   const { App } = await import('../App');
-  render(<App />);
+  commits = 0;
+  render(
+    <Profiler id="app" onRender={() => { commits += 1; }}>
+      <App />
+    </Profiler>,
+  );
 }
 
 const $ = <T extends HTMLElement>(selector: string): T => {
@@ -492,6 +501,35 @@ describe('the app', () => {
     expect(text('#playPause')).toBe('Stop');
   });
 
+  it('moves the beat display without rendering, however fast the click goes', async () => {
+    setUp(4, 'top', 200, 200); // 300 ms a beat, the fastest anyone practises to
+    setCountIn(false);
+    click('#begin');
+    click('#playPause');
+
+    const lit = () =>
+      [...document.querySelectorAll('#beats .beats__dot')].findIndex((dot) =>
+        dot.classList.contains('beats__dot--on'),
+      );
+
+    // The dots keep up at speed, driven straight from the beat.
+    runClock(0.2);
+    expect(lit()).toBe(0);
+    runClock(0.31);
+    expect(lit()).toBe(1);
+    runClock(0.31);
+    expect(lit()).toBe(2);
+
+    // And they cost nothing. `runClock` drives a fake clock, under which React never gets
+    // to finish work anyway — so the count is only worth reading once the real event loop
+    // has had a turn. Ten more beats, and React has still not been asked to do anything:
+    // a setState per beat shows up here as a commit, batched or not.
+    const before = commits;
+    runClock(3);
+    vi.useRealTimers();
+    await new Promise((settle) => setTimeout(settle, 0));
+    expect(commits).toBe(before);
+  });
 });
 
 // The screen listens on the document, so the key goes there rather than at an element —

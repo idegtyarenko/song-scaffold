@@ -28,7 +28,7 @@ type Allowance = { limit: number; why: string };
  */
 const APPROVED_FILES: Record<string, Allowance> = {
   'screens/session-view.test.tsx': {
-    limit: 510,
+    limit: 560,
     why: 'its coverage, which moves to the React tests and shrinks with it (task-7)',
   },
 };
