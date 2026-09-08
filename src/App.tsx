@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 // The session screen has not moved yet: session-view.ts still draws it imperatively against
 // the markup in index.html. React owns the setup screen and hands the session its settings.
 import { endSession, startSession } from './screens/session-view';
-import { SetupScreen } from './screens/SetupScreen';
+import { SetupScreen } from './screens/setup/SetupScreen';
 import type { Settings } from './practice/settings';
 
 export function App() {
