@@ -29,6 +29,11 @@ jobs:
 
       - run: npm ci
 
+      # Cheap and unambiguous, so they answer before the test run does.
+      - run: npm run format:check
+
+      - run: npm run lint
+
       # The sequence generator and the session cursor are the method itself; a broken
       # ladder should never reach the practice room.
       - run: npm test
