@@ -38,7 +38,7 @@ export function Ladder({ rungs, current }: LadderProps) {
   }, [rungs, current]);
 
   return (
-    <details className="ladder" id="ladderPanel" ref={panel}>
+    <details className="ladder" ref={panel}>
       <summary className="ladder__summary">Ladder for this stage</summary>
       <div className="ladder__scroll">
         <table className="ladder__table">
@@ -55,7 +55,7 @@ export function Ladder({ rungs, current }: LadderProps) {
               </th>
             </tr>
           </thead>
-          <tbody id="ladderBody" ref={body}>
+          <tbody ref={body}>
             {rungs.map((rung, index) => (
               <tr
                 key={index}

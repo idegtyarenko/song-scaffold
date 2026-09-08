@@ -99,15 +99,18 @@ folding away underneath it.
 | `ui/` | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet. |
 | `screens/` | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from. |
 | `App.tsx`, `main.tsx` | the entry: mounts the React root, and switches between the setup screen and the session. |
+| `app-harness.tsx` | test-only, shipped to nobody: boots the whole app on a fake audio clock and reads it back the way a player does. |
 
 Everything that sounds is handed the same engine, so the click and anything played beside it
 stand on one clock.
 
 Tests sit beside what they test. `sequence.test.ts` and `session.test.ts` pin the method
 itself; `engine.test.ts` and `metronome.test.ts` drive the audio against a fake clock;
-`SetupScreen.test.tsx` and `session-view.test.tsx` drive the real screens under jsdom with a
+`SetupScreen.test.tsx` and `SessionScreen.test.tsx` drive the real screens under jsdom with a
 stub `AudioContext`, so the form, the four move buttons, the ladder, the beat display and the
-click scheduling are all exercised as they run. Only whether it *sounds* right needs your ears.
+click scheduling are all exercised as they run. The session is driven through what a player can
+perceive — a control by the name it shows, a value by the words on screen — so the markup can be
+rearranged underneath without rewriting the tests. Only whether it *sounds* right needs your ears.
 
 Two tests are about the tree rather than any one file: `layers.test.ts` for the layering above,
 and `structure.test.ts` for size — a file over 300 lines (a test over 400) or a folder over 12

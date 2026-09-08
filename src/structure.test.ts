@@ -26,12 +26,7 @@ type Allowance = { limit: number; why: string };
  * Files allowed past the threshold. The ceiling is granted, not observed: raise it only by
  * deciding again, and delete the entry once the file no longer needs it.
  */
-const APPROVED_FILES: Record<string, Allowance> = {
-  'screens/session-view.test.tsx': {
-    limit: 560,
-    why: 'its coverage, which moves to the React tests and shrinks with it (task-7)',
-  },
-};
+const APPROVED_FILES: Record<string, Allowance> = {};
 
 /** Folders allowed past the threshold, under the same terms. */
 const APPROVED_DIRS: Record<string, Allowance> = {

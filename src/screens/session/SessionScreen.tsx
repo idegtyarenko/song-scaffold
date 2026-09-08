@@ -135,12 +135,10 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
   const inStage = Array.from({ length: cursor.stage }, (_, index) => first + index);
 
   return (
-    <Card className="session" id="session">
+    <Card className="session">
       <div className="session__main">
         <div className="now">
-          <p className="now__chunk" id="nowChunk">
-            Play {describeChunk(cursor.rung.chunk)}
-          </p>
+          <p className="now__chunk">Play {describeChunk(cursor.rung.chunk)}</p>
           <SegmentMap
             ref={segments}
             total={settings.totalSegments}
@@ -148,33 +146,27 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
             playing={cursor.rung.chunk}
           />
           <p className="now__tempo">
-            <strong className="now__bpm" id="nowTempo">
-              {cursor.rung.tempo}
-            </strong>
-            <span className="now__unit" id="nowBeatName">
+            <strong className="now__bpm">{cursor.rung.tempo}</strong>
+            <span className="now__unit">
               <NoteGlyph note={meter.beatNote} />
             </span>
             <span className="now__unit">= BPM</span>
           </p>
           <Beats ref={beats} beatsPerBar={meter.beatsPerBar} />
           <p className="now__where">
-            <span id="nowStage">
+            <span>
               Stage {cursor.stage} of {settings.totalSegments}
             </span>
             <span className="now__dot">·</span>
-            <span id="nowRung">
+            <span>
               step {cursor.rungIndex + 1} of {cursor.ladder.length}
             </span>
-            <span className="badge" id="nowBadge" hidden={!cursor.rung.isTail}>
-              at target
-            </span>
-            <span className="badge badge--quiet" id="nowSubdivision" hidden={subdivision === null}>
-              {subdivision ? `+ ${subdivision.word}` : ''}
-            </span>
+            {cursor.rung.isTail && <span className="badge">at target</span>}
+            {subdivision && <span className="badge badge--quiet">+ {subdivision.word}</span>}
           </p>
         </div>
 
-        <p className="visually-hidden" id="live" role="status" aria-live="polite">
+        <p className="visually-hidden" role="status" aria-live="polite">
           {announce(cursor, settings.totalSegments)}
         </p>
 
@@ -192,7 +184,7 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
       <Ladder rungs={cursor.ladder} current={cursor.rungIndex} />
 
       <footer className="session__footer">
-        <Button variant="secondary" id="backToSetup" onClick={onExit}>
+        <Button variant="secondary" onClick={onExit}>
           ← Change setup
         </Button>
         <p className="keys">

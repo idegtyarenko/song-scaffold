@@ -35,7 +35,7 @@ export function Beats({ beatsPerBar, ref }: BeatsProps) {
   }), []);
 
   return (
-    <div className="beats" id="beats" ref={row} aria-hidden="true">
+    <div className="beats" ref={row} aria-hidden="true">
       {Array.from({ length: beatsPerBar }, (_, index) => (
         <span key={index} className="beats__dot" />
       ))}

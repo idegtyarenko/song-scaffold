@@ -43,7 +43,6 @@ export function Controls({
       <Button
         variant="primary"
         className={['controls__play', running && 'button--running'].filter(Boolean).join(' ')}
-        id="playPause"
         ref={play}
         onClick={onToggle}
       >
@@ -51,7 +50,6 @@ export function Controls({
       </Button>
       <div className="controls__grid">
         <Action
-          id="faster"
           shortcut="↑"
           name="Faster"
           large
@@ -60,7 +58,6 @@ export function Controls({
           onClick={onFaster}
         />
         <Action
-          id="slower"
           shortcut="↓"
           name="Slower"
           large
@@ -69,7 +66,6 @@ export function Controls({
           onClick={onSlower}
         />
         <Action
-          id="prevStage"
           shortcut="⇧←"
           name="Previous stage"
           sub="drop a segment"
@@ -77,7 +73,6 @@ export function Controls({
           onClick={onPrevStage}
         />
         <Action
-          id="nextStage"
           shortcut="⇧→"
           name="Next stage"
           sub="add a segment"
@@ -91,7 +86,6 @@ export function Controls({
 }
 
 interface ActionProps {
-  id: string;
   /** The key that does the same thing, shown above the name. */
   shortcut: string;
   name: string;
@@ -105,11 +99,10 @@ interface ActionProps {
   onClick: () => void;
 }
 
-function Action({ id, shortcut, name, sub, large, disabled, suggested, onClick }: ActionProps) {
+function Action({ shortcut, name, sub, large, disabled, suggested, onClick }: ActionProps) {
   return (
     <Button
       className={['controls__action', suggested && 'button--suggested'].filter(Boolean).join(' ')}
-      id={id}
       disabled={disabled}
       onClick={onClick}
     >

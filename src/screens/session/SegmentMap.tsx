@@ -43,7 +43,7 @@ export function SegmentMap({ total, inStage, playing, ref }: SegmentMapProps) {
   const sounding = new Set(playing);
 
   return (
-    <div className="segment-map" id="segmentMap" ref={map} aria-hidden="true">
+    <div className="segment-map" ref={map} aria-hidden="true">
       {Array.from({ length: total }, (_, index) => index + 1).map((segment) => (
         <span
           key={segment}
