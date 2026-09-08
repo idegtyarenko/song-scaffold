@@ -83,7 +83,7 @@ npm run build      # static bundle in dist/
 ```
 
 While practising: `Space` starts and stops the click, `↑`/`↓` move a tempo step, `Shift`+`←`/`→`
-move a stage. On a window wider than 62rem the ladder sits beside the transport instead of
+move a stage. On a window wider than 62rem the ladder sits beside the controls instead of
 folding away underneath it.
 
 ## Layout
@@ -94,10 +94,10 @@ folding away underneath it.
 | folder | what lives there |
 | ------ | ---------------- |
 | `model/` | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`). Pure. |
-| `practice/` | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four transport buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio. |
+| `practice/` | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four move buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio. |
 | `audio/` | the one `AudioContext` and the gesture that unlocks it (`engine.ts`), and the lookahead scheduler that clicks on its clock (`metronome.ts`). Knows nothing of the method. |
 | `ui/` | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet. |
-| `screens/` | whole screens: `SetupScreen.tsx` in React, and `session-view.ts`, the practice session still drawn by hand against the markup in `index.html` and being replaced one piece at a time. |
+| `screens/` | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from. |
 | `App.tsx`, `main.tsx` | the entry: mounts the React root, and switches between the setup screen and the session. |
 
 Everything that sounds is handed the same engine, so the click and anything played beside it
@@ -106,7 +106,7 @@ stand on one clock.
 Tests sit beside what they test. `sequence.test.ts` and `session.test.ts` pin the method
 itself; `engine.test.ts` and `metronome.test.ts` drive the audio against a fake clock;
 `SetupScreen.test.tsx` and `session-view.test.tsx` drive the real screens under jsdom with a
-stub `AudioContext`, so the form, the transport buttons, the ladder, the beat display and the
+stub `AudioContext`, so the form, the four move buttons, the ladder, the beat display and the
 click scheduling are all exercised as they run. Only whether it *sounds* right needs your ears.
 
 Two tests are about the tree rather than any one file: `layers.test.ts` for the layering above,

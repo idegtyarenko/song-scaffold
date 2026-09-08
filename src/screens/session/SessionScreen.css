@@ -1,0 +1,104 @@
+/* The practice session as a whole: what you play now, and the shell around the controls. */
+
+/* --- now ----------------------------------------------------------------- */
+
+.now { text-align: center; }
+
+.now__chunk {
+  margin: 0;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.now__tempo {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.now__bpm {
+  display: block;
+  color: var(--text);
+  font-size: clamp(3rem, 14vw, 5rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.now__unit { font-size: 0.9rem; }
+
+.now__where {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.now__dot { margin: 0 0.35rem; }
+
+/* --- badge --------------------------------------------------------------- */
+
+.badge {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+/* The subdivision note is information, not a milestone — it should not shout. */
+.badge--quiet {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-weight: 500;
+}
+
+/* --- session -------------------------------------------------------------- */
+
+.session__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+
+/* --- keys ----------------------------------------------------------------- */
+
+.keys {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.keys__key {
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-raised);
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+/* --- wide layout ----------------------------------------------------------- */
+
+/* Wide enough for two columns: the ladder takes the second one, and the controls keep the
+   first to themselves. The ladder's own half of this lives in Ladder.css. */
+@media (min-width: 62rem) {
+  .session {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    grid-template-rows: auto auto;
+    gap: 0 1.75rem;
+    align-items: start;
+  }
+
+  .session__main { grid-column: 1; grid-row: 1; }
+  .session__footer { grid-column: 1; grid-row: 2; }
+}

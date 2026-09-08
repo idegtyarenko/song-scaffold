@@ -1,14 +1,16 @@
 // @vitest-environment jsdom
 /**
- * Drives the whole app as it runs: the React setup screen hands off to the session, which
- * session-view.ts still draws imperatively, and the Web Audio wiring is watched on a fake
- * clock. The setup form has its own tests in SetupScreen.test.tsx; what is checked here is
- * the session it opens.
+ * Drives the whole app as it runs: the setup screen hands off to the session, and the Web
+ * Audio wiring is watched on a fake clock. The setup form has its own tests in
+ * SetupScreen.test.tsx; what is checked here is the session it opens.
+ *
+ * Named after the imperative screen it was written against, and still reaching for its ids
+ * and classes rather than for what the player sees. Task-7 rewrites it.
  */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Under the jsdom environment `import.meta.url` is an http URL, so resolve from the root.
@@ -107,7 +109,7 @@ async function bootApp({ wide = false } = {}): Promise<void> {
   vi.stubGlobal('AudioContext', FakeAudioContext);
   stubMatchMedia(wide);
   trackDocumentListeners();
-  // The session screen still comes from the page; React renders the rest into it.
+  // Nothing but #root comes from the page now; React renders every screen into it.
   document.body.innerHTML = BODY_HTML;
   const { App } = await import('../App');
   render(<App />);
@@ -283,10 +285,10 @@ describe('the app', () => {
     click('#begin');
     click('#nextStage');
     click('#faster'); // stage 2, chunk [2]
-    const pips = [...document.querySelectorAll('#pips .pips__pip')].map((pip) => ({
+    const pips = [...document.querySelectorAll('#segmentMap .segment-map__segment')].map((pip) => ({
       label: pip.textContent,
-      inStage: pip.classList.contains('pips__pip--in-stage'),
-      playing: pip.classList.contains('pips__pip--playing'),
+      inStage: pip.classList.contains('segment-map__segment--in-stage'),
+      playing: pip.classList.contains('segment-map__segment--playing'),
     }));
     expect(pips).toEqual([
       { label: '1', inStage: true, playing: false },
@@ -336,8 +338,8 @@ describe('the app', () => {
     const lit = () => [...document.querySelectorAll('#beats .beats__dot')].findIndex((dot) =>
       dot.classList.contains('beats__dot--on'),
     );
-    const barNow = () => [...document.querySelectorAll('#pips .pips__pip--playing')].findIndex(
-      (pip) => pip.classList.contains('pips__pip--now'),
+    const barNow = () => [...document.querySelectorAll('#segmentMap .segment-map__segment--playing')].findIndex(
+      (pip) => pip.classList.contains('segment-map__segment--now'),
     );
 
     runClock(0.2);
@@ -492,6 +494,10 @@ describe('the app', () => {
 
 });
 
+// The screen listens on the document, so the key goes there rather than at an element —
+// wrapped in `act`, because what it reaches is React and the render has to settle first.
 function press(key: string, init: KeyboardEventInit = {}): void {
-  document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }));
+  act(() => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }));
+  });
 }

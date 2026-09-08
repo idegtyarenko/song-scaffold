@@ -37,14 +37,3 @@ export function NoteGlyph({ note }: { note: NoteValue }) {
     />
   );
 }
-
-/**
- * The same glyph as an inline SVG string, for the session screen, which still writes its
- * markup by hand. It goes away with that screen.
- */
-export function noteGlyphMarkup(note: NoteValue): string {
-  return (
-    `<svg class="glyph" viewBox="0 0 16 24" fill="currentColor" role="img" ` +
-    `aria-label="${noteWord(note)}">${SHAPES[note]}</svg>`
-  );
-}

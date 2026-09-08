@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-// The session screen has not moved yet: session-view.ts still draws it imperatively against
-// the markup in index.html. React owns the setup screen and hands the session its settings.
-import { endSession, startSession } from './screens/session-view';
-import { SetupScreen } from './screens/setup/SetupScreen';
 import type { Settings } from './practice/settings';
+import { SessionScreen } from './screens/session/SessionScreen';
+import { SetupScreen } from './screens/setup/SetupScreen';
 
 export function App() {
   const [running, setRunning] = useState<Settings | null>(null);
@@ -12,7 +10,7 @@ export function App() {
 
   if (running) {
     return (
-      <PracticeSession
+      <SessionScreen
         settings={running}
         onExit={() => {
           setRunning(null);
@@ -23,19 +21,4 @@ export function App() {
   }
 
   return <SetupScreen onStart={setRunning} focusStart={returned} />;
-}
-
-/**
- * Draws nothing itself — it just holds the imperative session open for as long as React
- * says it is on screen, and tears it down when it is not.
- */
-function PracticeSession({ settings, onExit }: { settings: Settings; onExit: () => void }) {
-  useEffect(() => {
-    startSession(settings, onExit);
-    return endSession;
-    // A session is set up once, from the settings it opened with; changing those means
-    // going back to the setup screen, which unmounts this.
-  }, []);
-
-  return null;
 }

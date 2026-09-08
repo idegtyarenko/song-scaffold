@@ -1,0 +1,40 @@
+/* The click on and off, a step up or down the ladder, a segment added or dropped. */
+
+.controls { margin: 1.5rem 0 1rem; }
+
+.controls__play {
+  width: 100%;
+  min-height: 3.5rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.6rem;
+}
+
+.controls__grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.controls__action {
+  display: grid;
+  gap: 0.15rem;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  min-height: 4.25rem;
+  align-content: center;
+}
+
+.controls__key {
+  color: var(--muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+}
+
+.controls__name { font-weight: 600; }
+.controls__name--large { font-size: 1.05rem; }
+
+.controls__sub {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}

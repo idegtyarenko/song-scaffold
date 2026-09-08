@@ -27,10 +27,6 @@ type Allowance = { limit: number; why: string };
  * deciding again, and delete the entry once the file no longer needs it.
  */
 const APPROVED_FILES: Record<string, Allowance> = {
-  'screens/session-view.ts': {
-    limit: 310,
-    why: 'the imperative screen, dismantled into React piece by piece (task-7)',
-  },
   'screens/session-view.test.tsx': {
     limit: 510,
     why: 'its coverage, which moves to the React tests and shrinks with it (task-7)',

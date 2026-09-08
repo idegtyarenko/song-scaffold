@@ -1,6 +1,6 @@
 /**
  * The cursor over a practice session: which stage we are on, and how far up its ladder.
- * Pure — the UI reads a snapshot, the four transport buttons call the four actions.
+ * Pure — the UI reads a snapshot, and the four move buttons call the four actions.
  */
 
 import { buildStage, tempoLadder, type Rung } from './sequence';

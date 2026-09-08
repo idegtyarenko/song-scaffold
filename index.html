@@ -13,84 +13,8 @@
   </head>
   <body class="page">
     <main class="page__main">
-      <!-- Setup, and every screen after it: React renders here. -->
+      <!-- Every screen: React renders here. -->
       <div id="root"></div>
-
-      <!-- Session -->
-      <section class="card session" id="session" hidden>
-        <div class="session__main">
-          <div class="now">
-            <p class="now__chunk" id="nowChunk">segment 1</p>
-            <div class="pips" id="pips" aria-hidden="true"></div>
-            <p class="now__tempo">
-              <strong class="now__bpm" id="nowTempo">75</strong>
-              <span class="now__unit" id="nowBeatName"></span>
-              <span class="now__unit">= BPM</span>
-            </p>
-            <div class="beats" id="beats" aria-hidden="true"></div>
-            <p class="now__where">
-              <span id="nowStage">Stage 1 of 4</span>
-              <span class="now__dot">·</span>
-              <span id="nowRung">step 1 of 13</span>
-              <span class="badge" id="nowBadge" hidden>at target</span>
-              <span class="badge badge--quiet" id="nowSubdivision" hidden></span>
-            </p>
-          </div>
-
-          <p class="visually-hidden" id="live" role="status" aria-live="polite"></p>
-
-          <div class="transport">
-            <button class="button button--primary transport__play" id="playPause">Start</button>
-            <div class="transport__grid">
-              <button class="button transport__action" id="faster">
-                <span class="transport__key">↑</span>
-                <span class="transport__name transport__name--large">Faster</span>
-                <span class="transport__sub" id="fasterSub"></span>
-              </button>
-              <button class="button transport__action" id="slower">
-                <span class="transport__key">↓</span>
-                <span class="transport__name transport__name--large">Slower</span>
-                <span class="transport__sub" id="slowerSub"></span>
-              </button>
-              <button class="button transport__action" id="prevStage">
-                <span class="transport__key">⇧←</span>
-                <span class="transport__name">Previous stage</span>
-                <span class="transport__sub">drop a segment</span>
-              </button>
-              <button class="button transport__action" id="nextStage">
-                <span class="transport__key">⇧→</span>
-                <span class="transport__name">Next stage</span>
-                <span class="transport__sub">add a segment</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <details class="ladder" id="ladderPanel">
-          <summary class="ladder__summary">Ladder for this stage</summary>
-          <div class="ladder__scroll">
-            <table class="ladder__table">
-              <thead>
-                <tr class="ladder__row">
-                  <th class="ladder__heading" scope="col">#</th>
-                  <th class="ladder__heading" scope="col">Tempo</th>
-                  <th class="ladder__heading" scope="col">Play</th>
-                </tr>
-              </thead>
-              <tbody id="ladderBody"></tbody>
-            </table>
-          </div>
-        </details>
-
-        <footer class="session__footer">
-          <button class="button button--secondary" id="backToSetup">← Change setup</button>
-          <p class="keys">
-            <kbd class="keys__key">Space</kbd> start/stop ·
-            <kbd class="keys__key">↑</kbd><kbd class="keys__key">↓</kbd> tempo ·
-            <kbd class="keys__key">⇧</kbd>+<kbd class="keys__key">←</kbd><kbd class="keys__key">→</kbd> stage
-          </p>
-        </footer>
-      </section>
     </main>
 
     <script type="module" src="/src/main.tsx"></script>
