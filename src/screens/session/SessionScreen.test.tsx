@@ -171,7 +171,11 @@ describe('the practice session', () => {
 
     // A whole count-in bar a fifth below, then the music, one beat a second at 60 BPM.
     runClock(5);
-    expect(heard().slice(0, 4).every((frequency) => frequency < 1200)).toBe(true);
+    expect(
+      heard()
+        .slice(0, 4)
+        .every((frequency) => frequency < 1200),
+    ).toBe(true);
     expect(heard()[0]).toBeCloseTo(1600 * (2 / 3), 5);
     expect(heard()[4]).toBe(1600);
     expect(clicks()[1]!.at - clicks()[0]!.at).toBeCloseTo(1, 5);

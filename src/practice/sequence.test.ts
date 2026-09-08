@@ -53,11 +53,16 @@ describe('rotationPattern', () => {
     expect(rotationPattern(1)).toEqual([[1]]);
     expect(rotationPattern(2)).toEqual([[1, 2], [2]]);
     expect(rotationPattern(3)).toEqual([[1, 2, 3], [3], [2, 3], [3]]);
-    expect(rotationPattern(4)).toEqual([
-      [1, 2, 3, 4], [4], [3, 4], [4], [2, 3, 4], [4],
-    ]);
+    expect(rotationPattern(4)).toEqual([[1, 2, 3, 4], [4], [3, 4], [4], [2, 3, 4], [4]]);
     expect(rotationPattern(5)).toEqual([
-      [1, 2, 3, 4, 5], [5], [4, 5], [5], [3, 4, 5], [5], [2, 3, 4, 5], [5],
+      [1, 2, 3, 4, 5],
+      [5],
+      [4, 5],
+      [5],
+      [3, 4, 5],
+      [5],
+      [2, 3, 4, 5],
+      [5],
     ]);
   });
 
@@ -101,7 +106,12 @@ describe('buildStage', () => {
   it('always ends on the whole passage-so-far, for every stage and ladder length', () => {
     for (let stage = 1; stage <= 8; stage++) {
       for (const rungCount of [1, 2, 3, 5, 7, 12, 16]) {
-        const rungs = buildStage(stage, 8, Array.from({ length: rungCount }, (_, i) => 60 + i), false);
+        const rungs = buildStage(
+          stage,
+          8,
+          Array.from({ length: rungCount }, (_, i) => 60 + i),
+          false,
+        );
         expect(rungs[rungs.length - 1]!.chunk).toEqual(contiguous([1, stage]));
         expect(rungs.length).toBeGreaterThanOrEqual(rungCount);
       }
@@ -119,16 +129,16 @@ describe('buildStage', () => {
     // 7 segments, stage 3: segments 5-7 are in play and segment 5 is the newly added one,
     // so the runs grow forward out of it.
     const rungs = buildStage(3, 7, ladder, true);
-    expect(rungs.slice(0, 4).map((r) => r.chunk)).toEqual([
-      [5, 6, 7], [5], [5, 6], [5],
-    ]);
+    expect(rungs.slice(0, 4).map((r) => r.chunk)).toEqual([[5, 6, 7], [5], [5, 6], [5]]);
   });
 
   it('starts a backwards session on the very last segment', () => {
     expect(buildStage(1, 7, ladder, true)[0]!.chunk).toEqual([7]);
-    expect(buildStage(2, 7, ladder, true).slice(0, 2).map((r) => r.chunk)).toEqual([
-      [6, 7], [6],
-    ]);
+    expect(
+      buildStage(2, 7, ladder, true)
+        .slice(0, 2)
+        .map((r) => r.chunk),
+    ).toEqual([[6, 7], [6]]);
   });
 
   it('keeps every backwards chunk contiguous and in musical order', () => {
@@ -147,7 +157,12 @@ describe('buildStage', () => {
 
 describe('suggestRungs', () => {
   it('keeps the opening jump inside about a tenth of the start tempo', () => {
-    for (const [start, target] of [[75, 150], [60, 90], [120, 200], [40, 60]] as const) {
+    for (const [start, target] of [
+      [75, 150],
+      [60, 90],
+      [120, 200],
+      [40, 60],
+    ] as const) {
       const tempos = tempoLadder(start, target, suggestRungs(start, target));
       expect((tempos[1]! - tempos[0]!) / tempos[0]!).toBeLessThanOrEqual(0.125);
     }

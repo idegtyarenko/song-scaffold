@@ -88,9 +88,9 @@ describe('the layers', () => {
     const violations = FILES.filter((path) => PURE_LAYERS.includes(layerOf(path))).flatMap(
       (path) => {
         const source = readFileSync(path, 'utf8');
-        return FORBIDDEN_GLOBALS.filter((global) =>
-          new RegExp(`\\b${global}\\b`).test(source),
-        ).map((global) => `${relative(SRC, path)} touches ${global}`);
+        return FORBIDDEN_GLOBALS.filter((global) => new RegExp(`\\b${global}\\b`).test(source)).map(
+          (global) => `${relative(SRC, path)} touches ${global}`,
+        );
       },
     );
 

@@ -3,7 +3,14 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import './SetupScreen.css';
 import { METERS, findMeter, subdivisionSpan } from '../../model/meter';
 import { tempoLadder } from '../../practice/sequence';
-import { DEFAULT_SETTINGS, LIMITS, load, normalize, save, type Settings } from '../../practice/settings';
+import {
+  DEFAULT_SETTINGS,
+  LIMITS,
+  load,
+  normalize,
+  save,
+  type Settings,
+} from '../../practice/settings';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { Checkbox } from '../../ui/Checkbox';
@@ -145,7 +152,11 @@ export function SetupScreen({ onStart, focusStart = false }: SetupScreenProps) {
             </Field>
 
             <Field htmlFor="targetTempo" label="Target" hint="BPM">
-              <input {...numberField('targetTempo')} min={LIMITS.tempo.min} max={LIMITS.tempo.max} />
+              <input
+                {...numberField('targetTempo')}
+                min={LIMITS.tempo.min}
+                max={LIMITS.tempo.max}
+              />
             </Field>
 
             <Field

@@ -10,9 +10,5 @@ interface CardProps {
 
 /** A screen's surface. Each screen is one card on the page. */
 export function Card({ className, children }: CardProps) {
-  return (
-    <section className={['card', className].filter(Boolean).join(' ')}>
-      {children}
-    </section>
-  );
+  return <section className={['card', className].filter(Boolean).join(' ')}>{children}</section>;
 }

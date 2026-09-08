@@ -10,8 +10,13 @@
   min-height: 3rem;
 }
 
-.button:hover:not(:disabled) { border-color: var(--muted); }
-.button:disabled { opacity: 0.35; cursor: not-allowed; }
+.button:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+.button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 .button--primary {
   background: var(--accent);

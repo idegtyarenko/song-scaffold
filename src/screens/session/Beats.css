@@ -13,7 +13,9 @@
   height: 0.7rem;
   border-radius: 50%;
   background: var(--line);
-  transition: background 60ms linear, transform 60ms linear;
+  transition:
+    background 60ms linear,
+    transform 60ms linear;
 }
 
 .beats__dot--on {
@@ -21,8 +23,12 @@
   transform: scale(1.35);
 }
 
-.beats__dot--count-in { background: var(--muted); }
+.beats__dot--count-in {
+  background: var(--muted);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .beats__dot { transition: none; }
+  .beats__dot {
+    transition: none;
+  }
 }

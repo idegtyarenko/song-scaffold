@@ -149,9 +149,7 @@ export function buildStage(
  */
 export function suggestRungs(start: number, target: number): number {
   if (target <= start) return 2;
-  const steps = Math.ceil(
-    (2 * TAPER * (target - start)) / ((TAPER + 1) * MAX_FIRST_JUMP * start),
-  );
+  const steps = Math.ceil((2 * TAPER * (target - start)) / ((TAPER + 1) * MAX_FIRST_JUMP * start));
   return Math.min(30, Math.max(2, steps + 1));
 }
 

@@ -2,7 +2,9 @@
 
 /* --- now ----------------------------------------------------------------- */
 
-.now { text-align: center; }
+.now {
+  text-align: center;
+}
 
 .now__chunk {
   margin: 0;
@@ -26,7 +28,9 @@
   letter-spacing: -0.03em;
 }
 
-.now__unit { font-size: 0.9rem; }
+.now__unit {
+  font-size: 0.9rem;
+}
 
 .now__where {
   margin: 0;
@@ -34,7 +38,9 @@
   font-size: 0.9rem;
 }
 
-.now__dot { margin: 0 0.35rem; }
+.now__dot {
+  margin: 0 0.35rem;
+}
 
 /* --- badge --------------------------------------------------------------- */
 
@@ -99,6 +105,12 @@
     align-items: start;
   }
 
-  .session__main { grid-column: 1; grid-row: 1; }
-  .session__footer { grid-column: 1; grid-row: 2; }
+  .session__main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .session__footer {
+    grid-column: 1;
+    grid-row: 2;
+  }
 }

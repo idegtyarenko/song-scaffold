@@ -10,7 +10,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-.setup__submit { width: 100%; }
+.setup__submit {
+  width: 100%;
+}
 
 /* --- masthead ------------------------------------------------------------ */
 
@@ -32,7 +34,9 @@
   font-size: 0.8rem;
 }
 
-.masthead__separator { margin: 0 0.4rem; }
+.masthead__separator {
+  margin: 0 0.4rem;
+}
 
 .masthead__link {
   color: var(--text);
@@ -50,7 +54,9 @@
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
 }
 
-.fields__item--wide { grid-column: 1 / -1; }
+.fields__item--wide {
+  grid-column: 1 / -1;
+}
 
 /* --- group --------------------------------------------------------------- */
 

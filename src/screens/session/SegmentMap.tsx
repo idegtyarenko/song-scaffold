@@ -29,15 +29,19 @@ interface SegmentMapProps {
 export function SegmentMap({ total, inStage, playing, ref }: SegmentMapProps) {
   const map = useRef<HTMLDivElement>(null);
 
-  useImperativeHandle(ref, () => ({
-    markBar(barInChunk) {
-      map.current
-        ?.querySelectorAll('.segment-map__segment--playing')
-        .forEach((segment, index) =>
-          segment.classList.toggle('segment-map__segment--now', index === barInChunk),
-        );
-    },
-  }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      markBar(barInChunk) {
+        map.current
+          ?.querySelectorAll('.segment-map__segment--playing')
+          .forEach((segment, index) =>
+            segment.classList.toggle('segment-map__segment--now', index === barInChunk),
+          );
+      },
+    }),
+    [],
+  );
 
   const stage = new Set(inStage);
   const sounding = new Set(playing);

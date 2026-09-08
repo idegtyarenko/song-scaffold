@@ -2,8 +2,8 @@
 
 A tool for taking a hard passage apart and building it back up to tempo. Today it does that
 one way: as a practice metronome for Dr. Molly Gebrian's **Interleaved Clicking Up #1**, the
-method from *Learn Faster, Perform Better: A Musician's Guide to the Neuroscience of
-Practicing* (Oxford University Press, 2024), ch. 16.
+method from _Learn Faster, Perform Better: A Musician's Guide to the Neuroscience of
+Practicing_ (Oxford University Press, 2024), ch. 16.
 
 ## The method
 
@@ -15,16 +15,16 @@ once a bar.
 A **stage** is however many segments are in play. Within a stage you rotate through a fixed
 pattern of overlapping chunks, and the metronome goes up one notch on every repetition:
 
-| stage | rotation |
-| ----- | -------- |
-| 1 | `[1]` |
-| 2 | `[1 2]` `[2]` |
-| 3 | `[1 2 3]` `[3]` `[2 3]` `[3]` |
-| 4 | `[1 2 3 4]` `[4]` `[3 4]` `[4]` `[2 3 4]` `[4]` |
-| 5 | `[1…5]` `[5]` `[4 5]` `[5]` `[3 4 5]` `[5]` `[2 3 4 5]` `[5]` |
+| stage | rotation                                                      |
+| ----- | ------------------------------------------------------------- |
+| 1     | `[1]`                                                         |
+| 2     | `[1 2]` `[2]`                                                 |
+| 3     | `[1 2 3]` `[3]` `[2 3]` `[3]`                                 |
+| 4     | `[1 2 3 4]` `[4]` `[3 4]` `[4]` `[2 3 4]` `[4]`               |
+| 5     | `[1…5]` `[5]` `[4 5]` `[5]` `[3 4 5]` `[5]` `[2 3 4 5]` `[5]` |
 
 The newest segment alternates with a run that reaches it from one segment further back each
-time. Because no two consecutive repetitions are the same chunk *and* no two are at the same
+time. Because no two consecutive repetitions are the same chunk _and_ no two are at the same
 tempo, the practice is interleaved rather than blocked — harder in the room, and much better
 retained the next day, which is the only test that counts.
 
@@ -33,7 +33,7 @@ Two more rules:
 - Once the ladder tops out, the rotation carries on at the target tempo until it lands back on
   the whole passage-so-far, so a stage always ends by playing everything you have built.
 - Climb until you reach the target tempo **or until you can no longer keep up**. Either way,
-  press *Next stage* — the new segment brings the tempo back down to the start, which is what
+  press _Next stage_ — the new segment brings the tempo back down to the start, which is what
   it needs.
 
 Building **from the bottom** mirrors the whole thing: stage 1 is the last segment, and each
@@ -93,15 +93,15 @@ folding away underneath it.
 `src/` is laid out by layer, and the layering is enforced rather than remembered:
 `src/layers.test.ts` reads the imports back and fails on one pointing the wrong way.
 
-| folder | what lives there |
-| ------ | ---------------- |
-| `model/` | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`). Pure. |
-| `practice/` | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four move buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio. |
-| `audio/` | the one `AudioContext` and the gesture that unlocks it (`engine.ts`), and the lookahead scheduler that clicks on its clock (`metronome.ts`). Knows nothing of the method. |
-| `ui/` | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet. |
-| `screens/` | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from. |
-| `App.tsx`, `main.tsx` | the entry: mounts the React root, and switches between the setup screen and the session. |
-| `app-harness.tsx` | test-only, shipped to nobody: boots the whole app on a fake audio clock and reads it back the way a player does. |
+| folder                | what lives there                                                                                                                                                                                                            |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model/`              | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`). Pure.                                                                                                                       |
+| `practice/`           | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four move buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio. |
+| `audio/`              | the one `AudioContext` and the gesture that unlocks it (`engine.ts`), and the lookahead scheduler that clicks on its clock (`metronome.ts`). Knows nothing of the method.                                                   |
+| `ui/`                 | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet.                                                                                          |
+| `screens/`            | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from.                                  |
+| `App.tsx`, `main.tsx` | the entry: mounts the React root, and switches between the setup screen and the session.                                                                                                                                    |
+| `app-harness.tsx`     | test-only, shipped to nobody: boots the whole app on a fake audio clock and reads it back the way a player does.                                                                                                            |
 
 Everything that sounds is handed the same engine, so the click and anything played beside it
 stand on one clock.
@@ -112,7 +112,7 @@ itself; `engine.test.ts` and `metronome.test.ts` drive the audio against a fake 
 stub `AudioContext`, so the form, the four move buttons, the ladder, the beat display and the
 click scheduling are all exercised as they run. The session is driven through what a player can
 perceive — a control by the name it shows, a value by the words on screen — so the markup can be
-rearranged underneath without rewriting the tests. Only whether it *sounds* right needs your ears.
+rearranged underneath without rewriting the tests. Only whether it _sounds_ right needs your ears.
 
 Two tests are about the tree rather than any one file: `layers.test.ts` for the layering above,
 and `structure.test.ts` for size — a file over 300 lines (a test over 400) or a folder over 12
@@ -132,8 +132,8 @@ She writes it out on page 4 of [The Amazing List of Practice
 Techniques](https://mollygebrian.wordpress.com/wp-content/uploads/2020/06/the-amazing-list-of-practice-techniques-with-gingold-rhythms-1.pdf#page=4),
 explains it in [How To Practice to Increase Speed: Part
 II](https://www.youtube.com/watch?v=75OWZAq-O4U) and demonstrates it in [Part
-III](https://www.youtube.com/watch?v=e08zFDnLOYY). It is Chapter 16 of *Learn Faster, Perform
-Better*.
+III](https://www.youtube.com/watch?v=e08zFDnLOYY). It is Chapter 16 of _Learn Faster, Perform
+Better_.
 
 The rotation here matches her written description exactly — "play the first three
 beats/bars. Then do the NEW bar/beat ONLY at 65. Then the 2nd and 3rd beats at 70. Then the

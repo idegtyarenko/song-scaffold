@@ -110,7 +110,12 @@ export async function bootApp({ wide = false } = {}): Promise<void> {
   const { App } = await import('./App');
   renders = 0;
   render(
-    <Profiler id="app" onRender={() => { renders += 1; }}>
+    <Profiler
+      id="app"
+      onRender={() => {
+        renders += 1;
+      }}
+    >
       <App />
     </Profiler>,
   );
@@ -178,9 +183,7 @@ export const litBeat = (): number =>
   dots().findIndex((dot) => dot.classList.contains('beats__dot--on'));
 
 /** So is the segment map — in the stage, sounding, or the bar you are on. */
-export const segments = (): Element[] => [
-  ...document.querySelectorAll('.segment-map__segment'),
-];
+export const segments = (): Element[] => [...document.querySelectorAll('.segment-map__segment')];
 export const marks = (segment: Element, state: 'in-stage' | 'playing' | 'now'): boolean =>
   segment.classList.contains(`segment-map__segment--${state}`);
 

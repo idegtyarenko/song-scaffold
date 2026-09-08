@@ -35,16 +35,28 @@ export const METERS: Meter[] = [
   { id: '3/8', label: '3/8', beatsPerBar: 3, secondaryAccents: [], beatNote: 'eighth' },
   { id: '7/8', label: '7/8', beatsPerBar: 7, secondaryAccents: [2, 4], beatNote: 'eighth' },
   {
-    id: '6/8', label: '6/8', beatsPerBar: 2, secondaryAccents: [],
-    beatNote: 'dotted-quarter', compound: TRIPLE,
+    id: '6/8',
+    label: '6/8',
+    beatsPerBar: 2,
+    secondaryAccents: [],
+    beatNote: 'dotted-quarter',
+    compound: TRIPLE,
   },
   {
-    id: '9/8', label: '9/8', beatsPerBar: 3, secondaryAccents: [],
-    beatNote: 'dotted-quarter', compound: TRIPLE,
+    id: '9/8',
+    label: '9/8',
+    beatsPerBar: 3,
+    secondaryAccents: [],
+    beatNote: 'dotted-quarter',
+    compound: TRIPLE,
   },
   {
-    id: '12/8', label: '12/8', beatsPerBar: 4, secondaryAccents: [],
-    beatNote: 'dotted-quarter', compound: TRIPLE,
+    id: '12/8',
+    label: '12/8',
+    beatsPerBar: 4,
+    secondaryAccents: [],
+    beatNote: 'dotted-quarter',
+    compound: TRIPLE,
   },
 ];
 
@@ -89,9 +101,7 @@ export function subdivisionAt(meter: Meter, tempo: number): Subdivision | null {
 }
 
 /** What this meter's extra clicks are, and the top tempo at which they still sound. */
-export function subdivisionSpan(
-  meter: Meter,
-): { subdivision: Subdivision; upTo: number } | null {
+export function subdivisionSpan(meter: Meter): { subdivision: Subdivision; upTo: number } | null {
   if (meter.compound) {
     return {
       subdivision: meter.compound,

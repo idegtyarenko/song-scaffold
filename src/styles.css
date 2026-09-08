@@ -39,10 +39,14 @@
   }
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 /* A block that sets `display` would otherwise outrank the user agent's `[hidden]`. */
-[hidden] { display: none !important; }
+[hidden] {
+  display: none !important;
+}
 
 :focus-visible {
   outline: 3px solid var(--accent);
@@ -55,7 +59,13 @@
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font:
+    16px/1.5 ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -77,5 +87,7 @@
 /* --- wide layout ----------------------------------------------------------- */
 
 @media (min-width: 62rem) {
-  .page__main { max-width: 70rem; }
+  .page__main {
+    max-width: 70rem;
+  }
 }

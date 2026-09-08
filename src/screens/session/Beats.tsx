@@ -23,16 +23,20 @@ interface BeatsProps {
 export function Beats({ beatsPerBar, ref }: BeatsProps) {
   const row = useRef<HTMLDivElement>(null);
 
-  useImperativeHandle(ref, () => ({
-    show(beat) {
-      if (!beat.isPulse) return;
-      const dots = row.current?.children;
-      if (!dots) return;
-      for (const dot of dots) dot.classList.remove('beats__dot--on', 'beats__dot--count-in');
-      dots[beat.beat]?.classList.add('beats__dot--on');
-      if (beat.isCountIn) dots[beat.beat]?.classList.add('beats__dot--count-in');
-    },
-  }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      show(beat) {
+        if (!beat.isPulse) return;
+        const dots = row.current?.children;
+        if (!dots) return;
+        for (const dot of dots) dot.classList.remove('beats__dot--on', 'beats__dot--count-in');
+        dots[beat.beat]?.classList.add('beats__dot--on');
+        if (beat.isCountIn) dots[beat.beat]?.classList.add('beats__dot--count-in');
+      },
+    }),
+    [],
+  );
 
   return (
     <div className="beats" ref={row} aria-hidden="true">

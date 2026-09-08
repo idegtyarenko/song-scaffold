@@ -78,9 +78,7 @@ describe('Metronome', () => {
     metronome.stop();
 
     expect(beats.slice(0, 5).map((b) => b.beat)).toEqual([0, 1, 2, 3, 0]);
-    expect(beats.slice(0, 4).map((b) => b.accent)).toEqual([
-      'strong', 'weak', 'medium', 'weak',
-    ]);
+    expect(beats.slice(0, 4).map((b) => b.accent)).toEqual(['strong', 'weak', 'medium', 'weak']);
     expect(beats.every((b) => b.isPulse)).toBe(true);
   });
 
@@ -107,9 +105,7 @@ describe('Metronome', () => {
 
   it('counts the count-in bar separately from the music', () => {
     const beats: Beat[] = [];
-    const metronome = new Metronome(engine, { ...FOUR_FOUR, countInBars: 1 }, (b) =>
-      beats.push(b),
-    );
+    const metronome = new Metronome(engine, { ...FOUR_FOUR, countInBars: 1 }, (b) => beats.push(b));
     metronome.start();
     runClock(8.2);
     metronome.stop();
@@ -131,10 +127,20 @@ describe('Metronome', () => {
     metronome.stop();
 
     expect(beats.slice(0, 6).map((b) => b.isPulse)).toEqual([
-      true, false, false, true, false, false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
     ]);
     expect(beats.slice(0, 6).map((b) => b.accent)).toEqual([
-      'strong', 'subdivision', 'subdivision', 'weak', 'subdivision', 'subdivision',
+      'strong',
+      'subdivision',
+      'subdivision',
+      'weak',
+      'subdivision',
+      'subdivision',
     ]);
     // Three clicks per pulse at 60 BPM is one click every 200ms.
     expect(clicks[1]!.at - clicks[0]!.at).toBeCloseTo(1 / 3, 5);

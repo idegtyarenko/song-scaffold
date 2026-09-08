@@ -16,4 +16,6 @@
   accent-color: var(--accent);
 }
 
-.check__label { line-height: 1.2; }
+.check__label {
+  line-height: 1.2;
+}
