@@ -6,6 +6,8 @@
  * tofu. Drawing all of them keeps the set consistent and independent of the reader's fonts.
  */
 
+import './notes.css';
+
 export type NoteValue = 'half' | 'quarter' | 'dotted-quarter' | 'eighth';
 
 /** How each value reads aloud, for screen readers and for running text. */
