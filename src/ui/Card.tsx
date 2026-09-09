@@ -4,7 +4,8 @@ import './Card.css';
 import { cx } from './classes';
 
 interface CardProps {
-  /** The block modifier this card carries, e.g. `setup`. */
+  /** The screen's own block, riding on the same element to take its layout from the
+   * screen's stylesheet, e.g. `session` — a two-column grid, not a kind of card. */
   className?: string;
   children: ReactNode;
 }
