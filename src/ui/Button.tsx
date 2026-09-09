@@ -1,6 +1,7 @@
 import type { ComponentPropsWithRef } from 'react';
 
 import './Button.css';
+import { cx } from './classes';
 
 /**
  * `primary` is the one action a screen is asking for, `secondary` the way back out, and
@@ -14,6 +15,7 @@ interface ButtonProps extends ComponentPropsWithRef<'button'> {
 
 /** Never a submit button by default: no screen here posts a form. */
 export function Button({ variant, className, type = 'button', ...rest }: ButtonProps) {
-  const classes = ['button', variant && `button--${variant}`, className].filter(Boolean);
-  return <button className={classes.join(' ')} type={type} {...rest} />;
+  const classes = cx('button', variant && `button--${variant}`, className);
+
+  return <button className={classes} type={type} {...rest} />;
 }

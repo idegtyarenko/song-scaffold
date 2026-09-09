@@ -1,6 +1,7 @@
 import { useImperativeHandle, useRef, type RefObject } from 'react';
 
 import './SegmentMap.css';
+import { cx } from '../../ui/classes';
 
 export interface SegmentMapHandle {
   /**
@@ -51,13 +52,11 @@ export function SegmentMap({ total, inStage, playing, ref }: SegmentMapProps) {
       {Array.from({ length: total }, (_, index) => index + 1).map((segment) => (
         <span
           key={segment}
-          className={[
+          className={cx(
             'segment-map__segment',
             stage.has(segment) && 'segment-map__segment--in-stage',
             sounding.has(segment) && 'segment-map__segment--playing',
-          ]
-            .filter(Boolean)
-            .join(' ')}
+          )}
         >
           {segment}
         </span>

@@ -4,6 +4,7 @@ import './Controls.css';
 import { describeChunk } from '../../practice/sequence';
 import type { SessionState } from '../../practice/session';
 import { Button } from '../../ui/Button';
+import { cx } from '../../ui/classes';
 
 interface ControlsProps {
   state: SessionState;
@@ -42,7 +43,7 @@ export function Controls({
     <div className="controls">
       <Button
         variant="primary"
-        className={['controls__play', running && 'button--running'].filter(Boolean).join(' ')}
+        className={cx('controls__play', running && 'button--running')}
         ref={play}
         onClick={onToggle}
       >
@@ -102,16 +103,12 @@ interface ActionProps {
 function Action({ shortcut, name, sub, large, disabled, suggested, onClick }: ActionProps) {
   return (
     <Button
-      className={['controls__action', suggested && 'button--suggested'].filter(Boolean).join(' ')}
+      className={cx('controls__action', suggested && 'button--suggested')}
       disabled={disabled}
       onClick={onClick}
     >
       <span className="controls__key keyboard-only">{shortcut}</span>
-      <span
-        className={['controls__name', large && 'controls__name--large'].filter(Boolean).join(' ')}
-      >
-        {name}
-      </span>
+      <span className={cx('controls__name', large && 'controls__name--large')}>{name}</span>
       <span className="controls__sub">{sub}</span>
     </Button>
   );

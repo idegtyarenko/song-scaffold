@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import './Ladder.css';
+import { cx } from '../../ui/classes';
 import { describeChunk, type Rung } from '../../practice/sequence';
 
 interface LadderProps {
@@ -59,13 +60,11 @@ export function Ladder({ rungs, current }: LadderProps) {
             {rungs.map((rung, index) => (
               <tr
                 key={index}
-                className={[
+                className={cx(
                   'ladder__row',
                   index === current && 'ladder__row--current',
                   rung.isTail && 'ladder__row--tail',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
+                )}
               >
                 <td className="ladder__cell">{index + 1}</td>
                 <td className="ladder__cell">{rung.tempo}</td>

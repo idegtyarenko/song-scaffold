@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import './Field.css';
+import { cx } from './classes';
 
 interface FieldProps {
   /** The control's id. Without one the label is a plain span — a radio group has no single
@@ -27,7 +28,7 @@ export function Field({ htmlFor, label, action, hint, hintId, className, childre
   );
 
   return (
-    <div className={['field', className].filter(Boolean).join(' ')}>
+    <div className={cx('field', className)}>
       {action ? (
         <div className="field__header">
           {name}

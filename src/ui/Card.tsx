@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import './Card.css';
+import { cx } from './classes';
 
 interface CardProps {
   /** The block modifier this card carries, e.g. `setup`. */
@@ -10,5 +11,5 @@ interface CardProps {
 
 /** A screen's surface. Each screen is one card on the page. */
 export function Card({ className, children }: CardProps) {
-  return <section className={['card', className].filter(Boolean).join(' ')}>{children}</section>;
+  return <section className={cx('card', className)}>{children}</section>;
 }

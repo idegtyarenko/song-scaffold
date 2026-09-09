@@ -32,7 +32,7 @@ const APPROVED_FILES: Record<string, Allowance> = {};
 const APPROVED_DIRS: Record<string, Allowance> = {
   'ui/': {
     limit: 16,
-    why: 'a component and its stylesheet are two files each — seven components, not fourteen',
+    why: 'a component and its stylesheet are two files each — seven components and a helper, not fifteen',
   },
 };
 
