@@ -122,13 +122,6 @@ lines (a test over 400) or a folder over 12
 entries fails until the exception is written down with a reason and a ceiling, and then says so
 on every run.
 
-## Not implemented
-
-Interleaved clicking up **#2** (simulating performance at tempo), at-tempo chunking, and
-the build-towards/from-the-centre variants. Subdivision clicks are in, but on the
-metronome's terms only — see [Time signatures](#time-signatures); there is no switch for
-turning them on yourself.
-
 ## Credit
 
 The method is Dr. Molly Gebrian's — <https://www.mollygebrian.com>.
