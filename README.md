@@ -121,8 +121,10 @@ on every run.
 
 ## Not implemented
 
-Interleaved clicking up **#2** (simulating performance at tempo), at-tempo chunking,
-subdivision clicks, and the build-towards/from-the-centre variants.
+Interleaved clicking up **#2** (simulating performance at tempo), at-tempo chunking, and
+the build-towards/from-the-centre variants. Subdivision clicks are in, but on the
+metronome's terms only — see [Time signatures](#time-signatures); there is no switch for
+turning them on yourself.
 
 ## Credit
 
