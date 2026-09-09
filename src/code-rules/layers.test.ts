@@ -27,6 +27,9 @@ const ALLOWED: Record<string, string[]> = {
   waveform: ['model', 'ui', 'waveform'],
   screens: ['model', 'practice', 'audio', 'ui', 'waveform', 'screens', 'root'],
   root: ['model', 'practice', 'audio', 'ui', 'waveform', 'screens', 'root'],
+  // The rules read the tree from the outside, through the file system; an import of their
+  // own would tie them to the arrangement they are there to measure.
+  'code-rules': [],
 };
 
 /**

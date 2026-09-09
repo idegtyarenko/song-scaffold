@@ -91,7 +91,7 @@ folding away underneath it.
 ## Layout
 
 `src/` is laid out by layer, and the layering is enforced rather than remembered:
-`src/layers.test.ts` reads the imports back and fails on one pointing the wrong way.
+`src/code-rules/layers.test.ts` reads the imports back and fails on one pointing the wrong way.
 
 | folder                | what lives there                                                                                                                                                                                                            |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -102,6 +102,7 @@ folding away underneath it.
 | `screens/`            | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from.                                  |
 | `App.tsx`, `main.tsx` | the entry: mounts the React root, and switches between the setup screen and the session.                                                                                                                                    |
 | `app-harness.tsx`     | test-only, shipped to nobody: boots the whole app on a fake audio clock and reads it back the way a player does.                                                                                                            |
+| `code-rules/`         | the two tests that measure the tree itself rather than any one file — the layering and the sizes. They read the source through the file system and import none of it.                                                       |
 
 Everything that sounds is handed the same engine, so the click and anything played beside it
 stand on one clock.
@@ -114,8 +115,9 @@ click scheduling are all exercised as they run. The session is driven through wh
 perceive — a control by the name it shows, a value by the words on screen — so the markup can be
 rearranged underneath without rewriting the tests. Only whether it _sounds_ right needs your ears.
 
-Two tests are about the tree rather than any one file: `layers.test.ts` for the layering above,
-and `structure.test.ts` for size — a file over 300 lines (a test over 400) or a folder over 12
+Two tests are about the tree rather than any one file, and live together in `code-rules/`:
+`layers.test.ts` for the layering above, and `structure.test.ts` for size — a file over 300
+lines (a test over 400) or a folder over 12
 entries fails until the exception is written down with a reason and a ceiling, and then says so
 on every run.
 
