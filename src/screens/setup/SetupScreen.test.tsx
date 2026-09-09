@@ -110,6 +110,32 @@ describe('the setup screen', () => {
     expect(value('#targetTempo')).toBe('100');
   });
 
+  it('remembers the number you stopped on, not the ones you passed through', async () => {
+    await setNumber('#startTempo', 90);
+
+    const input = $<HTMLInputElement>('#startTempo');
+    await user.clear(input);
+    await user.type(input, '12');
+
+    // Neither the empty box's default nor the 12 on the way to 120 has been settled on.
+    reload();
+    expect(value('#startTempo')).toBe('90');
+
+    await setNumber('#startTempo', 120);
+    reload();
+    expect(value('#startTempo')).toBe('120');
+  });
+
+  it('keeps a switch as soon as it is flipped, there being no field to leave', async () => {
+    await user.click($('input[name="direction"][value="bottom"]'));
+    await user.click($('#countIn'));
+
+    reload();
+
+    expect($<HTMLInputElement>('input[name="direction"][value="bottom"]').checked).toBe(true);
+    expect($<HTMLInputElement>('#countIn').checked).toBe(false);
+  });
+
   it('credits the method and points at Gebrian’s own sources', () => {
     const link = (selector: string) => $<HTMLAnchorElement>(selector);
     expect(link('#methodLink').textContent).toContain('Molly Gebrian');

@@ -39,10 +39,16 @@ export function SetupScreen({ onStart, focusStart = false }: SetupScreenProps) {
     if (focusStart) start.current?.focus();
   }, [focusStart]);
 
-  function update(patch: Partial<Settings>): void {
+  /** Fold a change into the settings, normalized, and say what they became. */
+  function change(patch: Partial<Settings>): Settings {
     const next = normalize({ ...settings, ...patch });
-    save(next);
     setSettings(next);
+    return next;
+  }
+
+  /** A change with nothing half-typed behind it — a switch, a menu, a checkbox. */
+  function update(patch: Partial<Settings>): void {
+    save(change(patch));
   }
 
   function typeInto(field: NumberField, raw: string): void {
@@ -54,11 +60,15 @@ export function SetupScreen({ onStart, focusStart = false }: SetupScreenProps) {
     // Typing a rung count takes it off the automatic suggestion; Auto is the way back —
     // and it stays on screen, unlike the old "clear the box" trick, which nobody would find
     // once a stale preference had been persisted.
-    update(field === 'rungs' ? { ...patch, rungsIsAutomatic: false } : patch);
+    // Not saved: a number under the cursor is on its way somewhere, and an empty box would
+    // put a default nobody chose into storage.
+    change(field === 'rungs' ? { ...patch, rungsIsAutomatic: false } : patch);
   }
 
+  /** Leaving the field is what settles the number, so that is what gets remembered. */
   function commit(field: NumberField): void {
     setDrafts((current) => ({ ...current, [field]: undefined }));
+    save(settings);
   }
 
   function numberField(field: NumberField) {
