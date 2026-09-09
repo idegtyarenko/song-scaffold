@@ -30,6 +30,10 @@ const APPROVED_FILES: Record<string, Allowance> = {};
 
 /** Folders allowed past the threshold, under the same terms. */
 const APPROVED_DIRS: Record<string, Allowance> = {
+  'src/': {
+    limit: 13,
+    why: 'six layers of the design, plus the entry point, the routes, their tests and the page stylesheet',
+  },
   'ui/': {
     limit: 16,
     why: 'a component and its stylesheet are two files each — seven components and a helper, not fifteen',

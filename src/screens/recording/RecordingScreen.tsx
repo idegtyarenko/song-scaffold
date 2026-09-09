@@ -1,17 +1,17 @@
 /**
  * Opening a recording to work on.
  *
- * The screen a file arrives at, and where the waveform and the loop will be drawn later.
- * For now it does one thing honestly: takes a file by button or by drop, decodes it, and
- * shows the passport it built — so that what the application knows about the recording is
- * visible to the person who picked it, fingerprint included.
+ * The screen a file arrives at, and where the loop will be drawn later. It takes a file by
+ * button or by drop, decodes it, and shows what came back: the recording itself as a
+ * waveform, and under it the passport — so that what the application knows about the file
+ * is visible to the person who picked it, fingerprint included.
  */
 
 import { useRef, useState } from 'react';
 
 import './RecordingScreen.css';
 import { audio } from '../../audio/engine';
-import { RecordingLoadError, RecordingSlot } from '../../audio/recording';
+import { RecordingLoadError, RecordingSlot, type Recording } from '../../audio/recording';
 import {
   formatBytes,
   formatDuration,
@@ -21,6 +21,7 @@ import {
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { cx } from '../../ui/classes';
+import { Waveform } from '../../waveform/Waveform';
 
 interface RecordingScreenProps {
   onBack: () => void;
@@ -30,7 +31,7 @@ interface RecordingScreenProps {
 type Status =
   | { kind: 'empty' }
   | { kind: 'opening'; fileName: string }
-  | { kind: 'open'; passport: AudioPassport }
+  | { kind: 'open'; recording: Recording }
   | { kind: 'failed'; message: string };
 
 const UNEXPECTED = 'The recording could not be opened. Try another file.';
@@ -48,8 +49,7 @@ export function RecordingScreen({ onBack }: RecordingScreenProps) {
   async function open(file: File): Promise<void> {
     setStatus({ kind: 'opening', fileName: file.name });
     try {
-      const { passport } = await slot.load(file);
-      setStatus({ kind: 'open', passport });
+      setStatus({ kind: 'open', recording: await slot.load(file) });
     } catch (error) {
       // Anything the loader itself raised already carries wording for a person; anything
       // else is a surprise, and a surprise still has to say something rather than nothing.
@@ -128,7 +128,14 @@ export function RecordingScreen({ onBack }: RecordingScreenProps) {
         </p>
       )}
 
-      {status.kind === 'open' && <Passport passport={status.passport} />}
+      {status.kind === 'open' && (
+        <>
+          {/* Keyed by the recording it draws: a new file is a new waveform, zoomed out and
+              with no cursor, rather than an old view pointing into audio that is gone. */}
+          <Waveform key={status.recording.passport.sha256} buffer={status.recording.buffer} />
+          <Passport passport={status.recording.passport} />
+        </>
+      )}
 
       <Button
         variant="secondary"

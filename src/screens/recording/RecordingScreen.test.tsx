@@ -4,7 +4,9 @@
  * drop zone, the passport that comes back, and what is said when the file will not open.
  *
  * The audio context is a double, as everywhere else here — the real one decodes nothing in
- * jsdom, and what is being checked is the screen, not the codec.
+ * jsdom, and what is being checked is the screen, not the codec. The waveform it hands the
+ * decoded buffer to is the real component: jsdom lays it out to nothing, so it draws
+ * nothing, which is exactly as much as this file has an opinion about.
  */
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -58,8 +60,18 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** A decoded recording, as much of one as the screen and the waveform ever ask about. */
+const decoded = (durationSec: number, sampleRate = 8000) =>
+  ({
+    duration: durationSec,
+    sampleRate,
+    length: Math.round(durationSec * sampleRate),
+    numberOfChannels: 1,
+    getChannelData: () => new Float32Array(Math.round(durationSec * sampleRate)),
+  }) as unknown as AudioBuffer;
+
 beforeEach(() => {
-  decodes = () => Promise.resolve({ duration: 271.4 } as AudioBuffer);
+  decodes = () => Promise.resolve(decoded(271.4));
 });
 
 describe('the recording screen', () => {
@@ -119,7 +131,7 @@ describe('the recording screen', () => {
     await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Opening long.mp3…'));
     expect($<HTMLButtonElement>('#chooseRecording').disabled).toBe(true);
 
-    finish({ duration: 60 } as AudioBuffer);
+    finish(decoded(60));
     await waitFor(() => expect(screen.getByRole('status').textContent).toBe(''));
     expect($<HTMLButtonElement>('#chooseRecording').disabled).toBe(false);
   });

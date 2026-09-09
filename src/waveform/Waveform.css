@@ -1,0 +1,42 @@
+/* --- waveform ------------------------------------------------------------ */
+
+/*
+ * The palette the canvas paints with. Declared here, in CSS, rather than in the drawing
+ * code: light and dark then stay in the one file that knows about themes, and the canvas
+ * reads whatever is current. The ink is deliberately not `--text` — a waveform at full text
+ * contrast is a black slab, and what has to read at arm's length is its outline. Plain
+ * colours rather than a `color-mix`: the canvas parses these strings itself, and a value it
+ * cannot parse is not an error but a silently black waveform.
+ */
+.waveform {
+  --wave-ink: #a8b2c2;
+  --wave-axis: var(--line);
+  --wave-cursor: var(--accent);
+
+  margin: 1.25rem 0 0;
+}
+
+@media (prefers-color-scheme: light) {
+  .waveform {
+    --wave-ink: #4b5462;
+  }
+}
+
+.waveform__canvas {
+  display: block;
+  width: 100%;
+  height: clamp(7rem, 22vh, 11rem);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  /* The canvas handles its own dragging and pinching; letting the browser scroll or
+     zoom the page from the same gesture would fight it. */
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.waveform__range {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}

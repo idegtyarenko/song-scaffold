@@ -22,8 +22,11 @@ const ALLOWED: Record<string, string[]> = {
   // Meters and note values are music, not the method — a click grid may know them.
   audio: ['model', 'audio'],
   ui: ['model', 'ui'],
-  screens: ['model', 'practice', 'audio', 'ui', 'screens', 'root'],
-  root: ['model', 'practice', 'audio', 'ui', 'screens', 'root'],
+  // The canvas is drawing, not method: it may know what a recording is and lean on the
+  // shared components, and nothing about how a passage is practised.
+  waveform: ['model', 'ui', 'waveform'],
+  screens: ['model', 'practice', 'audio', 'ui', 'waveform', 'screens', 'root'],
+  root: ['model', 'practice', 'audio', 'ui', 'waveform', 'screens', 'root'],
 };
 
 /**
