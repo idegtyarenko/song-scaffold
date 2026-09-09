@@ -35,7 +35,8 @@ jobs:
       - run: npm run lint
 
       # The sequence generator and the session cursor are the method itself; a broken
-      # ladder should never reach the practice room.
+      # ladder should never reach the practice room. Runs the per-file coverage floors too,
+      # which fail the build on a module that arrived without any tests at all.
       - run: npm test
 
       - run: npm run build

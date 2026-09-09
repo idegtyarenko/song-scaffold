@@ -1,4 +1,6 @@
 node_modules/
 dist/
+# Only written when a run asks for a file reporter; the default summary prints and vanishes.
+coverage/
 *.log
 .DS_Store
