@@ -1,0 +1,31 @@
+/* The head of the setup form: the name of the app and the method it follows. */
+
+.masthead__title {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  letter-spacing: -0.01em;
+}
+
+.masthead__lede {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  max-width: 40ch;
+}
+
+.masthead__sources {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.masthead__separator {
+  margin: 0 0.4rem;
+}
+
+.masthead__link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
