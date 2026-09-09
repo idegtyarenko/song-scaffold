@@ -18,6 +18,7 @@ import type { Settings } from '../../practice/settings';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { NoteGlyph } from '../../ui/NoteGlyph';
+import { useShortcuts } from '../useShortcuts';
 import { Beats, type BeatsHandle } from './Beats';
 import { Controls } from './Controls';
 import { Ladder } from './Ladder';
@@ -28,16 +29,6 @@ interface SessionScreenProps {
   settings: Settings;
   onExit: () => void;
 }
-
-/** What each key does, and whether it needs Shift — a stage is too much work to lose. */
-type Move = 'toggle' | 'faster' | 'slower' | 'nextStage' | 'previousStage';
-
-const SHORTCUTS: Record<string, { shift: boolean; move: Move }> = {
-  ArrowUp: { shift: false, move: 'faster' },
-  ArrowDown: { shift: false, move: 'slower' },
-  ArrowRight: { shift: true, move: 'nextStage' },
-  ArrowLeft: { shift: true, move: 'previousStage' },
-};
 
 export function SessionScreen({ settings, onExit }: SessionScreenProps) {
   const meter = findMeter(settings.meterId);
@@ -104,7 +95,7 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
     setRunning(metronome.isRunning);
   }
 
-  const moves: Record<Move, () => void> = {
+  const moves = {
     toggle,
     faster: () => move(() => session.goFaster()),
     slower: () => move(() => session.goSlower()),
@@ -112,35 +103,15 @@ export function SessionScreen({ settings, onExit }: SessionScreenProps) {
     previousStage: () => move(() => session.previousStage()),
   };
 
-  // The keys are read off the document, so they work wherever the focus is. What they do
-  // is taken from a ref, so the one listener never goes stale.
-  const latest = useRef(moves);
-  useEffect(() => {
-    latest.current = moves;
+  // Shift on the stage keys, and nothing else: a stage is too much work to step out of by
+  // brushing an arrow.
+  useShortcuts({
+    Space: moves.toggle,
+    ArrowUp: moves.faster,
+    ArrowDown: moves.slower,
+    'Shift+ArrowRight': moves.nextStage,
+    'Shift+ArrowLeft': moves.previousStage,
   });
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent): void {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.target instanceof HTMLElement && event.target.closest('input, select, textarea')) {
-        return;
-      }
-
-      if (event.code === 'Space') {
-        event.preventDefault();
-        latest.current.toggle();
-        return;
-      }
-
-      const shortcut = SHORTCUTS[event.key];
-      if (!shortcut || shortcut.shift !== event.shiftKey) return;
-      event.preventDefault();
-      latest.current[shortcut.move]();
-    }
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, []);
 
   useEffect(() => () => metronome.stop(), [metronome]);
 
