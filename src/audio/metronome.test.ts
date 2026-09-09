@@ -2,44 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioEngine } from './engine';
 import { Metronome, type Beat, type MetronomeConfig } from './metronome';
+import { clicks, runClock, stubAudio } from './fake-context';
 
-/** Clicks the metronome scheduled, in order. */
-let clicks: { frequency: number; at: number }[] = [];
-let audio: FakeAudioContext;
 let engine: AudioEngine;
-
-class FakeAudioContext {
-  currentTime = 0;
-  destination = {} as AudioNode;
-  resume = vi.fn(async () => {});
-  constructor() {
-    // The rule is aimed at `const self = this` closures; here the double hands itself to the
-    // test so the assertions can read what was scheduled.
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    audio = this;
-  }
-  createGain() {
-    return {
-      gain: {
-        setValueAtTime: vi.fn(),
-        linearRampToValueAtTime: vi.fn(),
-        exponentialRampToValueAtTime: vi.fn(),
-      },
-      connect: (node: unknown) => node,
-    };
-  }
-  createOscillator() {
-    const oscillator = {
-      type: '',
-      frequency: { value: 0 },
-      onended: null,
-      connect: (node: unknown) => node,
-      start: (at: number) => clicks.push({ frequency: oscillator.frequency.value, at }),
-      stop: vi.fn(),
-    };
-    return oscillator;
-  }
-}
 
 const FOUR_FOUR: MetronomeConfig = {
   tempo: 60,
@@ -49,19 +14,10 @@ const FOUR_FOUR: MetronomeConfig = {
   countInBars: 0,
 };
 
-/** Run the audio clock and the scheduler's lookahead timer together. */
-function runClock(seconds: number): void {
-  for (let elapsed = 0; elapsed < seconds; elapsed += 0.025) {
-    audio.currentTime += 0.025;
-    vi.advanceTimersByTime(25);
-  }
-}
-
 describe('Metronome', () => {
   beforeEach(() => {
-    clicks = [];
     vi.useFakeTimers();
-    vi.stubGlobal('AudioContext', FakeAudioContext);
+    stubAudio();
     engine = new AudioEngine();
   });
 
@@ -143,7 +99,7 @@ describe('Metronome', () => {
       'subdivision',
     ]);
     // Three clicks per pulse at 60 BPM is one click every 200ms.
-    expect(clicks[1]!.at - clicks[0]!.at).toBeCloseTo(1 / 3, 5);
+    expect(clicks()[1]!.at - clicks()[0]!.at).toBeCloseTo(1 / 3, 5);
   });
 
   it('stops reporting once stopped', () => {

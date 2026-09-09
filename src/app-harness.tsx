@@ -6,76 +6,23 @@
  * the only way into a session, and everything is read back through what a person can
  * perceive — a control by the name it shows, a value by the words on screen. The two things
  * that carry no words, the beat dots and the segment map, are read where they are drawn.
+ *
+ * The one thing standing in for something real is the audio context, which jsdom does not
+ * have; it lives in `audio/fake-context.ts` and is shared with the audio layer's own tests.
  */
 
 import { Profiler } from 'react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { vi } from 'vitest';
 
-/** One scheduled click: the pitch it sounds at, and when on the audio clock. */
-export interface Click {
-  frequency: number;
-  at: number;
-}
+import { stubAudio } from './audio/fake-context';
 
-let scheduled: Click[] = [];
-let context: FakeAudioContext | null = null;
+export { clicks, forgetClicks, heard, runClock, type Click } from './audio/fake-context';
+
 let renders = 0;
-
-/** Every click the metronome has scheduled since the last `forgetClicks()`, in order. */
-export const clicks = (): Click[] => scheduled;
-/** The same, as bare pitches — which accent fell where. */
-export const heard = (): number[] => scheduled.map((click) => click.frequency);
-export const forgetClicks = (): void => {
-  scheduled = [];
-};
 
 /** Commits React has made since the app booted — one per render that reached the DOM. */
 export const commits = (): number => renders;
-
-/** A context that plays nothing and writes down what it was asked to play. */
-class FakeAudioContext {
-  currentTime = 0;
-
-  constructor() {
-    // The rule is aimed at `const self = this` closures; here the double hands itself to the
-    // test so the assertions can read what was scheduled.
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    context = this;
-  }
-
-  destination = {} as AudioNode;
-  resume = vi.fn(async () => {});
-  createGain() {
-    return {
-      gain: {
-        setValueAtTime: vi.fn(),
-        linearRampToValueAtTime: vi.fn(),
-        exponentialRampToValueAtTime: vi.fn(),
-      },
-      connect: (node: unknown) => node,
-    };
-  }
-  createOscillator() {
-    const oscillator = {
-      type: '',
-      frequency: { value: 0 },
-      onended: null,
-      connect: (node: unknown) => node,
-      start: (at: number) => scheduled.push({ frequency: oscillator.frequency.value, at }),
-      stop: vi.fn(),
-    };
-    return oscillator;
-  }
-}
-
-/** Run the audio clock and the scheduler's lookahead timer together. */
-export function runClock(seconds: number): void {
-  for (let elapsed = 0; elapsed < seconds; elapsed += 0.025) {
-    context!.currentTime += 0.025;
-    vi.advanceTimersByTime(25);
-  }
-}
 
 /** jsdom implements no media queries, so the layout breakpoint is stated per test. */
 function stubMatchMedia(wide: boolean): void {
@@ -100,12 +47,10 @@ function stubMatchMedia(wide: boolean): void {
  */
 export async function bootApp({ wide = false } = {}): Promise<void> {
   cleanup();
-  forgetClicks();
-  context = null;
   localStorage.clear();
   Element.prototype.scrollIntoView = vi.fn();
   vi.resetModules();
-  vi.stubGlobal('AudioContext', FakeAudioContext);
+  stubAudio();
   stubMatchMedia(wide);
   const { App } = await import('./App');
   renders = 0;

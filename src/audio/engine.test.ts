@@ -1,30 +1,17 @@
 // @vitest-environment jsdom
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { AudioEngine } from './engine';
+import { contextsBuilt, stubAudio, type FakeAudioContext } from './fake-context';
 
-let built = 0;
 /** Gestures are dispatched at a target of the test's own, so no test hears another's. */
 let gestures: HTMLElement;
 
-class FakeAudioContext {
-  state: AudioContextState = 'suspended';
-  currentTime = 0;
-  destination = { id: 'destination' } as unknown as AudioNode;
-  resume = vi.fn(async () => {
-    this.state = 'running';
-  });
-  constructor() {
-    built++;
-  }
-}
-
 describe('AudioEngine', () => {
   beforeEach(() => {
-    built = 0;
     // A detached element, not the document: gesture listeners are never taken down, so a
     // shared target would let one test's engine hear the next test's tap.
     gestures = document.createElement('div');
-    vi.stubGlobal('AudioContext', FakeAudioContext);
+    stubAudio();
   });
 
   afterEach(() => {
@@ -35,7 +22,7 @@ describe('AudioEngine', () => {
     const engine = new AudioEngine();
     expect(engine.context).toBe(engine.context);
     expect(engine.output).toBe(engine.context.destination);
-    expect(built).toBe(1);
+    expect(contextsBuilt()).toBe(1);
   });
 
   it('builds nothing until something wants to play', () => {
@@ -48,7 +35,7 @@ describe('AudioEngine', () => {
     gestures.dispatchEvent(new Event('keydown'));
     gestures.dispatchEvent(new Event('pointerdown'));
 
-    expect(built).toBe(0);
+    expect(contextsBuilt()).toBe(0);
     expect(engine.currentTime).toBe(0);
   });
 
@@ -62,7 +49,7 @@ describe('AudioEngine', () => {
 
     start.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 
-    expect(built).toBe(1);
+    expect(contextsBuilt()).toBe(1);
     expect(engine.context.state).toBe('running');
   });
 
@@ -71,6 +58,7 @@ describe('AudioEngine', () => {
     // tap has to bring it back, or the click is silent for the rest of the session.
     const engine = new AudioEngine();
     engine.listenForGesture(gestures);
+    // Asking for the context is what opens it, the way the first gesture that plays would.
     const context = engine.context as unknown as FakeAudioContext;
     gestures.dispatchEvent(new Event('keydown'));
 
@@ -79,6 +67,6 @@ describe('AudioEngine', () => {
 
     expect(context.resume).toHaveBeenCalledTimes(2);
     expect(engine.context.state).toBe('running');
-    expect(built).toBe(1);
+    expect(contextsBuilt()).toBe(1);
   });
 });
