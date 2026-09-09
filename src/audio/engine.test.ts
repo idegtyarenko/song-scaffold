@@ -39,18 +39,28 @@ describe('AudioEngine', () => {
   });
 
   it('builds nothing until something wants to play', () => {
+    // Typing a tempo or tabbing through the setup form is a gesture like any other, and it
+    // must not open a context that has nothing to play — iOS counts an idle one against us.
     const engine = new AudioEngine();
     engine.listenForGesture(gestures);
+
+    gestures.dispatchEvent(new Event('keydown'));
+    gestures.dispatchEvent(new Event('keydown'));
+    gestures.dispatchEvent(new Event('pointerdown'));
 
     expect(built).toBe(0);
     expect(engine.currentTime).toBe(0);
   });
 
-  it('unlocks the sound on the first gesture, whatever it is', () => {
+  it('unlocks the sound on the gesture that starts it', () => {
+    // The press that starts the click reaches the button first and the document listener
+    // after, so the context exists by the time the unlock runs.
     const engine = new AudioEngine();
+    const start = gestures.appendChild(document.createElement('button'));
+    start.addEventListener('pointerdown', () => engine.context.destination);
     engine.listenForGesture(gestures);
 
-    gestures.dispatchEvent(new Event('pointerdown'));
+    start.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 
     expect(built).toBe(1);
     expect(engine.context.state).toBe('running');
@@ -61,8 +71,8 @@ describe('AudioEngine', () => {
     // tap has to bring it back, or the click is silent for the rest of the session.
     const engine = new AudioEngine();
     engine.listenForGesture(gestures);
-    gestures.dispatchEvent(new Event('keydown'));
     const context = engine.context as unknown as FakeAudioContext;
+    gestures.dispatchEvent(new Event('keydown'));
 
     context.state = 'suspended';
     gestures.dispatchEvent(new Event('keydown'));
