@@ -197,4 +197,16 @@ describe('the practice session', () => {
     press(' ', { code: 'Space' });
     expect(button('Stop')).toBeTruthy();
   });
+
+  it('goes back to the form when you change the setup, with the way in under the focus', () => {
+    begin({ segments: 5 });
+    expect(asked()).toBe('Play segment 1');
+
+    click(/Change setup/);
+
+    // The form is in front of us again, still holding the passage it was started with.
+    expect(screen.getByLabelText<HTMLInputElement>('Segments in the passage').value).toBe('5');
+    // And it is the way back in that has the focus, so Enter alone resumes practising.
+    expect(button('Start practising')).toBe(document.activeElement);
+  });
 });

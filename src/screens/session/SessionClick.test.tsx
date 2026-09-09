@@ -247,4 +247,23 @@ describe('the click of a practice session', () => {
     await new Promise((settle) => setTimeout(settle, 0));
     expect(commits()).toBe(before);
   });
+
+  it('lights the dot on the pulse alone, while the eighths click between', () => {
+    setUp({ meter: '6/8' });
+    click('Start practising');
+    click('Start');
+
+    runClock(0.2);
+    expect(litBeat()).toBe(0);
+
+    // An eighth has sounded in between, and the row has not answered it: the dots show the
+    // pulse, so the lit one stays put until the next dotted beat.
+    runClock(0.4);
+    expect(heard()).toContain(700);
+    expect(litBeat()).toBe(0);
+
+    // Which is what moves it.
+    runClock(0.5);
+    expect(litBeat()).toBe(1);
+  });
 });
