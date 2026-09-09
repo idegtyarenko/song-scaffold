@@ -63,7 +63,7 @@ first increment is than the last, 2.5) and `MAX_FIRST_JUMP` (0.12).
 
 ## Time signatures
 
-The tempo you type is always the BPM of the pulse — ♩ in 4/4, 𝅗𝅥 in 2/2, ♩. in 6/8, 9/8 and
+The tempo you type is always the BPM of the pulse — ♩ in 4/4, the half note in 2/2, ♩. in 6/8, 9/8 and
 12/8. While the passage is slow the pulse is not left on its own: the compound meters click
 their eighths, and a simple meter gets an extra click on the upbeat below 60, where the gap
 between pulses runs over a second and the player ends up guessing across it. Both drop away
