@@ -2,8 +2,9 @@
  * Whole-page keyboard shortcuts, for screens that answer to keys wherever the focus is.
  *
  * The keys are read off the document rather than off a focused element, so nothing has to
- * be clicked first. That leaves the two things every such listener needs: it steps aside
- * for browser and system chords, and it stays out of the way while text is being typed.
+ * be clicked first. That leaves the three things every such listener needs: it steps aside
+ * for browser and system chords, it stays out of the way while text is being typed, and it
+ * does not take a key out of the hands of the control that has the focus.
  */
 
 import { useEffect, useRef } from 'react';
@@ -25,9 +26,20 @@ function nameOf(event: KeyboardEvent, table: Record<Shortcut, unknown>): Shortcu
   return byCode in table ? byCode : null;
 }
 
-/** Text being typed is text, not shortcuts. */
-function isTyping(target: EventTarget | null): boolean {
-  return target instanceof HTMLElement && target.closest('input, select, textarea') !== null;
+/**
+ * A press the focused control has first claim on.
+ *
+ * Text being typed is text, not shortcuts. And a button that has the focus answers to Space
+ * and Enter — taking those would leave a keyboard user tabbing onto "Choose a file" and
+ * getting the metronome instead, with nothing on screen to explain it. The shortcut is for
+ * when the focus is nowhere in particular, which is where it is nearly all the time.
+ */
+function isSpokenFor(event: KeyboardEvent): boolean {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.closest('input, select, textarea')) return true;
+  const pressable = target.closest('button, a[href], summary, [role="button"]');
+  return pressable !== null && (event.key === ' ' || event.key === 'Enter');
 }
 
 /**
@@ -47,7 +59,7 @@ export function useShortcuts(shortcuts: Record<Shortcut, () => void>): void {
       // Meta, Ctrl and Alt belong to the browser and the system; taking them would shadow
       // something the player relies on more than they rely on us.
       if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (isTyping(event.target)) return;
+      if (isSpokenFor(event)) return;
 
       const name = nameOf(event, latest.current);
       if (!name) return;

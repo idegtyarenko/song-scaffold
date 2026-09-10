@@ -87,6 +87,22 @@ describe('useShortcuts', () => {
     expect(run).not.toHaveBeenCalled();
   });
 
+  it('leaves Space and Enter to the control that has the focus', () => {
+    const run = vi.fn();
+    renderHook(() => useShortcuts({ Space: run, Enter: run, ArrowUp: run }));
+    const button = document.createElement('button');
+    document.body.append(button);
+
+    expect(press({ key: ' ', code: 'Space' }, button)).toBe(false);
+    expect(press({ key: 'Enter' }, button)).toBe(false);
+    expect(run).not.toHaveBeenCalled();
+
+    // Only those two: a button has no claim on the arrows, and taking one from it costs
+    // nothing that the button was going to do with it.
+    expect(press({ key: 'ArrowUp' }, button)).toBe(true);
+    expect(run).toHaveBeenCalledOnce();
+  });
+
   it('lets a press it has no shortcut for through untouched', () => {
     renderHook(() => useShortcuts({ ArrowUp: vi.fn() }));
 
