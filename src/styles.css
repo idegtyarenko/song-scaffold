@@ -99,6 +99,26 @@
   }
 }
 
+/*
+ * The line of key hints itself, which two screens now show — the session and the recording
+ * workspace. It lives here rather than in either one's stylesheet, because a block belongs
+ * to whoever draws it, and by now that is nobody in particular.
+ */
+.keys {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.keys__key {
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-raised);
+  font: inherit;
+  font-size: 0.72rem;
+}
+
 /* --- wide layout ----------------------------------------------------------- */
 
 @media (min-width: 62rem) {

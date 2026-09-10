@@ -77,21 +77,6 @@
 
 /* --- keys ----------------------------------------------------------------- */
 
-.keys {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-
-.keys__key {
-  padding: 0.05rem 0.3rem;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--surface-raised);
-  font: inherit;
-  font-size: 0.72rem;
-}
-
 /* --- wide layout ----------------------------------------------------------- */
 
 /* Wide enough for two columns: the ladder takes the second one, and the controls keep the
