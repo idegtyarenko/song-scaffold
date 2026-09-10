@@ -25,6 +25,18 @@ describe('AudioEngine', () => {
     expect(contextsBuilt()).toBe(1);
   });
 
+  it('hands out one moment for everything that has to start together', () => {
+    const engine = new AudioEngine();
+    engine.context.currentTime = 4;
+
+    // Two sounds started from two readings of the clock are two starts. Whoever wants the
+    // click and the recording to begin together asks once and passes the answer to both.
+    const moment = engine.soon();
+    expect(moment).toBeGreaterThan(4);
+    engine.context.currentTime = 4.05;
+    expect(engine.soon()).toBeGreaterThan(moment);
+  });
+
   it('builds nothing until something wants to play', () => {
     // Typing a tempo or tabbing through the setup form is a gesture like any other, and it
     // must not open a context that has nothing to play — iOS counts an idle one against us.

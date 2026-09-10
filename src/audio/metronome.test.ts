@@ -15,6 +15,14 @@ const FOUR_FOUR: MetronomeConfig = {
 };
 
 describe('Metronome', () => {
+  it('begins at the moment it was handed, so a recording can begin at the same one', () => {
+    const moment = engine.soon();
+
+    new Metronome(engine, FOUR_FOUR, () => {}).start(moment);
+
+    expect(clicks()[0]!.at).toBe(moment);
+  });
+
   beforeEach(() => {
     vi.useFakeTimers();
     stubAudio();

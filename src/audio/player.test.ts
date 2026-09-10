@@ -113,6 +113,15 @@ describe('a loop', () => {
     expect(loop.positionSec()).toBeCloseTo(4 + (sounding() % 4), 9);
   });
 
+  it('begins at the moment it was handed, so a click can begin at the same one', () => {
+    const loop = player();
+    const moment = engine.soon();
+
+    loop.play(MINUTE, { fromSec: 4, toSec: 8 }, { loop: true, at: moment });
+
+    expect(passes()[0]!.at).toBe(moment);
+  });
+
   it('is silent, and says so, once stopped', () => {
     const loop = player();
     loop.play(MINUTE, { fromSec: 4, toSec: 8 }, { loop: true });

@@ -14,6 +14,17 @@
 /** Gestures the autoplay policy accepts as "the user is here". */
 const UNLOCK_EVENTS = ['pointerdown', 'touchstart', 'keydown'] as const;
 
+/**
+ * How far ahead of now anything starts.
+ *
+ * Scheduling takes a moment of its own — a buffer to look up, a few nodes to build — and a
+ * sound asked for at exactly now is a sound asked for slightly in the past, which the
+ * browser plays late or not at all. The lead lives here rather than in each module because
+ * two sounds started from two readings of the clock are two starts: whoever wants the click
+ * and the recording to begin together asks once and hands the answer to both.
+ */
+const LEAD_S = 0.08;
+
 export class AudioEngine {
   #context: AudioContext | null = null;
 
@@ -32,6 +43,14 @@ export class AudioEngine {
   /** Now, on the audio clock. Zero before anything has asked for a context. */
   get currentTime(): number {
     return this.#context?.currentTime ?? 0;
+  }
+
+  /**
+   * The soonest moment worth scheduling for. Read it once and pass it to everything that
+   * has to begin together — the click and the recording it stands over, in particular.
+   */
+  soon(): number {
+    return this.currentTime + LEAD_S;
   }
 
   /** Where everything that sounds connects. */

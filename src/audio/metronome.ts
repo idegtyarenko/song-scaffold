@@ -67,13 +67,18 @@ export class Metronome {
   }
 
   /**
-   * Starts clicking. The engine is what satisfies the autoplay policy, so a start outside a
-   * user gesture is silent until one arrives rather than an error here.
+   * Starts clicking, at `at` on the audio clock or as soon as anything can start.
+   *
+   * The moment is an argument so that a caller with something else to start — a recording
+   * to click over — can begin both from one reading of the clock rather than two.
+   *
+   * The engine is what satisfies the autoplay policy, so a start outside a user gesture is
+   * silent until one arrives rather than an error here.
    */
-  start(): void {
+  start(at: number = this.engine.soon()): void {
     if (this.isRunning) return;
     this.tick = 0;
-    this.nextBeatTime = this.engine.currentTime + 0.08;
+    this.nextBeatTime = at;
     this.timer = window.setInterval(() => this.schedule(), LOOKAHEAD_MS);
     this.frame = requestAnimationFrame(() => this.flushPending());
     this.schedule();
@@ -96,7 +101,7 @@ export class Metronome {
     if (!this.isRunning) return;
     this.silencePending();
     this.tick = 0;
-    this.nextBeatTime = this.engine.currentTime + 0.08;
+    this.nextBeatTime = this.engine.soon();
     this.schedule();
   }
 

@@ -36,9 +36,6 @@ const SCHEDULE_HORIZON_S = 0.3;
  */
 const SEAM_S = 0.006;
 
-/** A moment's grace before the first pass, so the scheduling is never late for it. */
-const LEAD_S = 0.08;
-
 /** One scheduled pass: what it drives, and the shape it fades with. */
 interface Pass {
   source: AudioBufferSourceNode;
@@ -82,17 +79,25 @@ export class LoopPlayer {
   /**
    * Play this stretch, once or round and round, replacing whatever was playing.
    *
+   * `at` is a moment on the audio clock, for a caller starting a click over the same
+   * recording: one reading of the clock for both, so the two begin together rather than
+   * eighty milliseconds apart in whichever direction the calls happened to fall.
+   *
    * The engine is what answers the autoplay policy, so a start outside a user gesture is
    * silent until one arrives rather than an error here — the same bargain the metronome makes.
    */
-  play(buffer: AudioBuffer, span: Selection, { loop = false } = {}): void {
+  play(
+    buffer: AudioBuffer,
+    span: Selection,
+    { loop = false, at = this.#engine.soon() } = {},
+  ): void {
     this.#silence();
     if (selectionLength(span) <= 0) return;
 
     this.#buffer = buffer;
     this.#span = span;
     this.#looping = loop;
-    this.#startedAt = this.#engine.currentTime + LEAD_S;
+    this.#startedAt = at;
     this.#nextPassAt = this.#startedAt;
     this.#timer = window.setInterval(() => this.#schedule(), LOOKAHEAD_MS);
     this.#schedule();
