@@ -11,7 +11,12 @@
 .waveform {
   --wave-ink: #a8b2c2;
   --wave-axis: var(--line);
-  --wave-cursor: var(--accent);
+  /* The cursor is where a play would begin and the head is where the sound is: one waits,
+     one moves, and only the moving one is worth the accent colour. */
+  --wave-cursor: #7b8496;
+  --wave-head: var(--accent);
+  --wave-selection: rgba(255, 200, 87, 0.16);
+  --wave-edge: rgba(255, 200, 87, 0.75);
 
   margin: 1.25rem 0 0;
 }
@@ -19,6 +24,10 @@
 @media (prefers-color-scheme: light) {
   .waveform {
     --wave-ink: #4b5462;
+    --wave-cursor: #8a93a3;
+    /* The same band over a light ground needs less of itself to read as a band. */
+    --wave-selection: rgba(199, 130, 0, 0.14);
+    --wave-edge: rgba(160, 105, 0, 0.8);
   }
 }
 

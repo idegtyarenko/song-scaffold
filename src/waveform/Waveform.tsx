@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
 import './Waveform.css';
+import type { Selection } from '../model/selection';
 import { colorsOf, paint, type Colors } from './draw';
-import { usePanZoom } from './gestures';
+import { useWaveformGestures } from './gestures';
 import { bucketSec, peaksOf, type Peaks } from './peaks';
 import { clampView, panBy, whole, zoomAt, type View } from './view';
 
@@ -13,6 +14,18 @@ interface WaveformProps {
    * cursor, rather than as an old view pointing into audio that is no longer there.
    */
   buffer: AudioBuffer;
+  /** The stretch that would be looped. Owned by the screen, which also has to say it aloud. */
+  selection: Selection | null;
+  onSelect: (selection: Selection | null) => void;
+  /** A click on a moment: where a play with nothing selected would begin. */
+  onSeek: (seconds: number) => void;
+  /**
+   * Where the sound is now, asked once a frame rather than passed as a value. A playhead
+   * sliding across a minute of audio is a hundred answers a second, and a hundred renders
+   * a second to move one line would be a hundred renders too many.
+   */
+  cursorSec: () => number | null;
+  playheadSec: () => number | null;
 }
 
 /** How fast the wheel zooms — an ordinary notch of about 100 units moves roughly a fifth. */
@@ -43,23 +56,44 @@ function floorSpan(peaks: Peaks, width: number): number {
  * The peak envelope is built once, when the recording opens, and every zoom is drawn by
  * combining its buckets — the samples themselves are walked exactly once.
  *
- * The visible stretch is React state, because it changes when a person turns a wheel or
- * drags, which is not something that happens per frame. The cursor is a ref, because it will
- * be: the player of TASK-10 moves it from the Web Audio clock, and a hundred renders a
- * second to slide one line would be a hundred renders too many.
+ * The visible stretch is React state, and so is the selection, because both change when a
+ * person turns a wheel or drags — which is not something that happens per frame. The two
+ * marks are not: they are read through functions once a frame, because the playhead moves on
+ * the Web Audio clock, and a hundred renders a second to slide one line would be a hundred
+ * renders too many.
  *
  * Redrawing happens in one animation frame loop that paints only when something changed —
- * so a resize, a theme switch, a zoom and a moving cursor all arrive through the same door.
+ * so a resize, a theme switch, a zoom, a new selection and a moving playhead all arrive
+ * through the same door.
  */
-export function Waveform({ buffer }: WaveformProps) {
+export function Waveform({
+  buffer,
+  selection,
+  onSelect,
+  onSeek,
+  cursorSec,
+  playheadSec,
+}: WaveformProps) {
   const peaks = useMemo(() => peaksOf(buffer), [buffer]);
   const [view, setView] = useState<View>(() => whole(buffer.duration));
 
   const canvas = useRef<HTMLCanvasElement>(null);
   const shown = useRef(view);
-  const cursor = useRef<number | null>(null);
   const colors = useRef<Colors | null>(null);
   const stale = useRef(true);
+  // What the marks read the last time anything was painted, so a frame that would draw the
+  // same picture draws nothing at all.
+  const painted = useRef<{ cursor: number | null; head: number | null }>({
+    cursor: null,
+    head: null,
+  });
+
+  // The moving parts are read through refs so the frame loop never runs a stale closure,
+  // and the component need not re-render for the marks to move.
+  const marks = useRef({ cursorSec, playheadSec, selection });
+  useEffect(() => {
+    marks.current = { cursorSec, playheadSec, selection };
+  });
 
   /** The recording is never narrower than a bucket, or a one-frame file would divide by zero. */
   const duration = Math.max(peaks.durationSec, bucketSec(peaks));
@@ -67,7 +101,7 @@ export function Waveform({ buffer }: WaveformProps) {
   useEffect(() => {
     shown.current = view;
     stale.current = true;
-  }, [view]);
+  }, [view, selection]);
 
   // The frame loop. It measures the canvas itself rather than watching for resizes: it is
   // already running, and a rectangle read is cheaper than the second observer it replaces.
@@ -99,6 +133,13 @@ export function Waveform({ buffer }: WaveformProps) {
         stale.current = true;
       }
 
+      const cursor = marks.current.cursorSec();
+      const head = marks.current.playheadSec();
+      if (cursor !== painted.current.cursor || head !== painted.current.head) {
+        painted.current = { cursor, head };
+        stale.current = true;
+      }
+
       if (!stale.current) return;
       const ctx = element.getContext('2d');
       if (!ctx) return;
@@ -112,7 +153,9 @@ export function Waveform({ buffer }: WaveformProps) {
         height,
         dpr,
         colors: colors.current,
-        cursorSec: cursor.current,
+        cursorSec: cursor,
+        playheadSec: head,
+        selection: marks.current.selection,
       });
     };
 
@@ -164,16 +207,15 @@ export function Waveform({ buffer }: WaveformProps) {
     return () => element.removeEventListener('wheel', onWheel);
   }, [peaks, duration]);
 
-  const panZoom = usePanZoom({
+  const gestures = useWaveformGestures({
     canvas,
     view,
     durationSec: duration,
+    selection,
     floorSpan: (width) => floorSpan(peaks, width),
     show: setView,
-    onTap: (seconds) => {
-      cursor.current = seconds;
-      stale.current = true;
-    },
+    onSelect,
+    onTap: onSeek,
   });
 
   /** The same moves as the wheel, for a keyboard: a fifth of the view at a time. */
@@ -202,10 +244,10 @@ export function Waveform({ buffer }: WaveformProps) {
         tabIndex={0}
         role="img"
         aria-label={
-          'The recording, drawn. Arrow keys move along it, plus and minus zoom, ' +
-          'Home shows the whole recording.'
+          'The recording, drawn. Drag across it to select a stretch to loop. Arrow keys ' +
+          'move along it, plus and minus zoom, Home shows the whole recording.'
         }
-        {...panZoom}
+        {...gestures}
         onKeyDown={onKeyDown}
       />
       <figcaption className="waveform__range">

@@ -7,14 +7,18 @@
  * this safe to run on every frame.
  */
 
+import type { Selection } from '../model/selection';
 import { envelope, type Peaks } from './peaks';
 import { offsetOf, type View } from './view';
 
-/** The three colours the picture is made of, taken from the page rather than fixed here. */
+/** The colours the picture is made of, taken from the page rather than fixed here. */
 export interface Colors {
   ink: string;
   axis: string;
   cursor: string;
+  selection: string;
+  edge: string;
+  head: string;
 }
 
 /** Everything the drawing depends on, and nothing else. */
@@ -29,6 +33,10 @@ export interface Scene {
   colors: Colors;
   /** Where the cursor stands, in seconds, or nowhere yet. */
   cursorSec: number | null;
+  /** The stretch that would be looped, if one has been dragged out. */
+  selection: Selection | null;
+  /** Where the sound has got to, while there is any. */
+  playheadSec: number | null;
 }
 
 /**
@@ -45,7 +53,10 @@ export function colorsOf(element: Element): Colors {
   return {
     ink: read('--wave-ink', '#8a8f99'),
     axis: read('--wave-axis', '#5b6472'),
-    cursor: read('--wave-cursor', '#ffc857'),
+    cursor: read('--wave-cursor', '#6f7889'),
+    selection: read('--wave-selection', 'rgba(255, 200, 87, 0.16)'),
+    edge: read('--wave-edge', '#ffc857'),
+    head: read('--wave-head', '#ffc857'),
   };
 }
 
@@ -65,6 +76,15 @@ export function paint(ctx: CanvasRenderingContext2D, scene: Scene): void {
   // so that a quiet passage stays a visible thread instead of a gap in the waveform.
   const hair = 1 / dpr;
 
+  // The selected stretch goes down first, so the waveform reads on top of it rather than
+  // through it: a band behind the ink, not a wash over it.
+  if (scene.selection) {
+    const from = offsetOf(scene.view, scene.selection.fromSec) * width;
+    const to = offsetOf(scene.view, scene.selection.toSec) * width;
+    ctx.fillStyle = colors.selection;
+    ctx.fillRect(from, 0, to - from, height);
+  }
+
   ctx.fillStyle = colors.axis;
   ctx.fillRect(0, middle - hair / 2, width, hair);
 
@@ -81,11 +101,31 @@ export function paint(ctx: CanvasRenderingContext2D, scene: Scene): void {
   // starts costing more than the audio it is drawing.
   ctx.fill();
 
-  if (scene.cursorSec !== null) {
-    const x = offsetOf(scene.view, scene.cursorSec) * width;
-    if (x >= 0 && x <= width) {
-      ctx.fillStyle = colors.cursor;
-      ctx.fillRect(x - 1, 0, 2, height);
-    }
+  // The edges of the selection are what a finger aims at to resize it, so they are lines in
+  // their own right rather than where the band happens to stop.
+  if (scene.selection) {
+    ctx.fillStyle = colors.edge;
+    mark(ctx, scene, offsetOf(scene.view, scene.selection.fromSec) * width);
+    mark(ctx, scene, offsetOf(scene.view, scene.selection.toSec) * width);
   }
+
+  // Two marks, not one, and they mean different things: the cursor is where a play would
+  // begin, the playhead is where the sound is now. Keeping them apart is what saves a rule
+  // about what a tap does in the middle of a loop — it moves the cursor, and the loop
+  // carries on. The playhead goes last, over everything, because it is the moving one.
+  if (scene.cursorSec !== null) {
+    ctx.fillStyle = colors.cursor;
+    mark(ctx, scene, offsetOf(scene.view, scene.cursorSec) * width);
+  }
+
+  if (scene.playheadSec !== null) {
+    ctx.fillStyle = colors.head;
+    mark(ctx, scene, offsetOf(scene.view, scene.playheadSec) * width);
+  }
+}
+
+/** A vertical line the height of the canvas, drawn only when it is on screen at all. */
+function mark(ctx: CanvasRenderingContext2D, scene: Scene, x: number): void {
+  if (x < 0 || x > scene.width) return;
+  ctx.fillRect(x - 1, 0, 2, scene.height);
 }

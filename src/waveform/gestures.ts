@@ -1,9 +1,14 @@
 /**
- * Dragging and pinching the waveform, with one arithmetic for both.
+ * Dragging, pinching and selecting on the waveform, with one arithmetic for all of it.
  *
- * A finger and a mouse are the same thing here: a set of points on the canvas. Panning is
- * their centre moving; zooming is the distance between them changing. Two fingers do both
- * at once, one finger does only the first, and neither needs a branch of its own.
+ * A finger and a mouse are the same thing here: a set of points on the canvas. What the
+ * points are doing decides what the gesture is, and there is one rule to remember — **one
+ * pointer selects, two pan and zoom**. Panning is the centre of two pointers moving; zooming
+ * is the distance between them changing; two fingers do both at once and need no branch of
+ * their own. Selecting is the primary act on this screen, so it gets the primary gesture,
+ * and mouse and touch then work identically, which is what makes the loop reachable on a
+ * phone at all. Panning with one finger is what that costs; the wheel, the keys and two
+ * fingers all still do it.
  *
  * Everything is measured from a snapshot taken when the gesture started, not from the
  * previous frame. Accumulating the moves instead would drift — the view is clamped at the
@@ -12,10 +17,14 @@
 
 import { useRef, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
 
-import { panBy, timeAt, zoomAt, type View } from './view';
+import { selectionOf, type Selection } from '../model/selection';
+import { offsetOf, panBy, timeAt, zoomAt, type View } from './view';
 
 /** Farther than this and the gesture was a drag, not a click on a spot. */
 const SLIP = 3;
+
+/** Within this of an edge of the selection, a drag takes hold of that edge instead of starting anew. */
+const GRAB = 8;
 
 /** The gesture in progress: where it started from, and what it has done since. */
 interface Gesture {
@@ -31,6 +40,14 @@ interface Gesture {
   anchor: number;
   /** Whether this gesture has moved far enough to be a drag rather than a click. */
   moved: boolean;
+  /**
+   * The moment a one-pointer drag is pinned to: where it started, or the far edge of the
+   * selection when it took hold of the near one. Null once a second pointer has turned the
+   * gesture into a pan.
+   */
+  heldAt: number | null;
+  /** The selection as it was, to put back if the gesture turns out to be a pan after all. */
+  before: Selection | null;
 }
 
 interface PanZoom {
@@ -38,9 +55,13 @@ interface PanZoom {
   /** The view as it stands now, for a click that has to name a moment. */
   view: View;
   durationSec: number;
+  /** The stretch selected right now, so a drag can take hold of one of its edges. */
+  selection: Selection | null;
   /** The narrowest view this canvas may be zoomed to, given how wide it is. */
   floorSpan: (width: number) => number;
   show: (view: View) => void;
+  /** A stretch dragged out, or nothing when the drag came to less than a stretch. */
+  onSelect: (selection: Selection | null) => void;
   /** A click rather than a drag, at this moment of the recording. */
   onTap: (seconds: number) => void;
 }
@@ -54,12 +75,22 @@ function reach(points: Iterable<number>): { center: number; spread: number } {
 }
 
 /**
- * Pointer handlers for the canvas: drag to pan, pinch to zoom, click to put the cursor down.
+ * Pointer handlers for the canvas: drag to select, pinch to pan and zoom, click to put the
+ * cursor down.
  *
  * The handlers are rebuilt on every render and hold nothing but the gesture itself, so they
- * always read the view the component is actually showing.
+ * always read the view and the selection the component is actually showing.
  */
-export function usePanZoom({ canvas, view, durationSec, floorSpan, show, onTap }: PanZoom) {
+export function useWaveformGestures({
+  canvas,
+  view,
+  durationSec,
+  selection,
+  floorSpan,
+  show,
+  onSelect,
+  onTap,
+}: PanZoom) {
   const gesture = useRef<Gesture>({
     points: new Map(),
     from: view,
@@ -67,6 +98,8 @@ export function usePanZoom({ canvas, view, durationSec, floorSpan, show, onTap }
     spread: 0,
     anchor: 0.5,
     moved: false,
+    heldAt: null,
+    before: null,
   });
 
   /** Start measuring again from here — on the first finger down, and whenever one joins or leaves. */
@@ -80,6 +113,21 @@ export function usePanZoom({ canvas, view, durationSec, floorSpan, show, onTap }
     now.anchor = box?.width ? (center - box.left) / box.width : 0.5;
   }
 
+  /**
+   * Where a drag from `x` is pinned. Landing within reach of an edge of the selection takes
+   * hold of that edge, and pins the drag to the opposite one — which is the same thing as
+   * having dragged from there, so resizing needs no mode of its own.
+   */
+  function pinOf(x: number, width: number): number {
+    const at = timeAt(view, x / width);
+    if (!selection) return at;
+    const from = offsetOf(view, selection.fromSec) * width;
+    const to = offsetOf(view, selection.toSec) * width;
+    if (Math.abs(x - from) <= GRAB) return selection.toSec;
+    if (Math.abs(x - to) <= GRAB) return selection.fromSec;
+    return at;
+  }
+
   return {
     onPointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
       const element = canvas.current;
@@ -88,8 +136,21 @@ export function usePanZoom({ canvas, view, durationSec, floorSpan, show, onTap }
       // the browser: it moves it here on a click anyway, and asking for it outright is what
       // turns the click into a keyboard focus and draws a ring nobody asked for.
       element.setPointerCapture(event.pointerId);
-      if (gesture.current.points.size === 0) gesture.current.moved = false;
-      gesture.current.points.set(event.pointerId, event.clientX);
+      const now = gesture.current;
+      const box = element.getBoundingClientRect();
+
+      if (now.points.size === 0) {
+        now.moved = false;
+        now.before = selection;
+        now.heldAt = box.width ? pinOf(event.clientX - box.left, box.width) : null;
+      } else if (now.heldAt !== null) {
+        // A second pointer joined: this is a pan, not a selection. Put back whatever was
+        // selected before the drag started, or a pinch begun on the waveform would eat it.
+        now.heldAt = null;
+        onSelect(now.before);
+      }
+
+      now.points.set(event.pointerId, event.clientX);
       restart(view);
     },
 
@@ -103,6 +164,15 @@ export function usePanZoom({ canvas, view, durationSec, floorSpan, show, onTap }
       const { center, spread } = reach(now.points.values());
       if (Math.abs(center - now.center) > SLIP || Math.abs(spread - now.spread) > SLIP) {
         now.moved = true;
+      }
+
+      if (now.heldAt !== null) {
+        if (now.moved) {
+          onSelect(
+            selectionOf(now.heldAt, timeAt(view, (center - box.left) / box.width), durationSec),
+          );
+        }
+        return;
       }
 
       const floor = floorSpan(box.width);
@@ -127,6 +197,7 @@ export function usePanZoom({ canvas, view, durationSec, floorSpan, show, onTap }
       }
 
       const box = canvas.current?.getBoundingClientRect();
+      now.heldAt = null;
       if (!now.moved && box?.width) onTap(timeAt(view, (event.clientX - box.left) / box.width));
     },
 
@@ -135,6 +206,7 @@ export function usePanZoom({ canvas, view, durationSec, floorSpan, show, onTap }
       now.points.delete(event.pointerId);
       now.moved = true;
       if (now.points.size > 0) restart(view);
+      else now.heldAt = null;
     },
   };
 }

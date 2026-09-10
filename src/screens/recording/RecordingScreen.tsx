@@ -18,6 +18,7 @@ import {
   shortFingerprint,
   type AudioPassport,
 } from '../../model/recording';
+import type { Selection } from '../../model/selection';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { cx } from '../../ui/classes';
@@ -39,6 +40,10 @@ const UNEXPECTED = 'The recording could not be opened. Try another file.';
 export function RecordingScreen({ onBack }: RecordingScreenProps) {
   const [slot] = useState(() => new RecordingSlot(audio));
   const [status, setStatus] = useState<Status>({ kind: 'empty' });
+  const [selection, setSelection] = useState<Selection | null>(null);
+  // Where a play would begin. A ref rather than state: it is a mark on a canvas that
+  // repaints itself, and nothing in the markup reads it.
+  const cursor = useRef<number | null>(null);
   // Dragging over the drop zone, so it can say it will take what is being carried. Kept in
   // state rather than in a class on the node: the zone is React's, not a canvas.
   const [carrying, setCarrying] = useState(false);
@@ -49,7 +54,12 @@ export function RecordingScreen({ onBack }: RecordingScreenProps) {
   async function open(file: File): Promise<void> {
     setStatus({ kind: 'opening', fileName: file.name });
     try {
-      setStatus({ kind: 'open', recording: await slot.load(file) });
+      const recording = await slot.load(file);
+      // A new recording is a new everything: the stretch and the cursor belonged to audio
+      // that is no longer open.
+      setSelection(null);
+      cursor.current = null;
+      setStatus({ kind: 'open', recording });
     } catch (error) {
       // Anything the loader itself raised already carries wording for a person; anything
       // else is a surprise, and a surprise still has to say something rather than nothing.
@@ -132,7 +142,15 @@ export function RecordingScreen({ onBack }: RecordingScreenProps) {
         <>
           {/* Keyed by the recording it draws: a new file is a new waveform, zoomed out and
               with no cursor, rather than an old view pointing into audio that is gone. */}
-          <Waveform key={status.recording.passport.sha256} buffer={status.recording.buffer} />
+          <Waveform
+            key={status.recording.passport.sha256}
+            buffer={status.recording.buffer}
+            selection={selection}
+            onSelect={setSelection}
+            onSeek={(seconds) => (cursor.current = seconds)}
+            cursorSec={() => cursor.current}
+            playheadSec={() => null}
+          />
           <Passport passport={status.recording.passport} />
         </>
       )}

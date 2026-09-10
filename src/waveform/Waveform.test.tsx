@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The waveform as it is worked: wheel, drag, click, and the theme changing underneath it.
+ * The waveform as it is worked: wheel, drag, pinch, click, and the theme changing
+ * underneath it.
  *
  * jsdom has no canvas and no layout, so both are doubles — a context that records what was
  * asked of it, and a rectangle the canvas claims to occupy. What is being checked is never
@@ -8,9 +9,11 @@
  * touches the samples, and when it repaints.
  */
 
+import { useRef, useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Selection } from '../model/selection';
 import { Waveform } from './Waveform';
 
 const WIDTH = 500;
@@ -48,6 +51,47 @@ function recording(): AudioBuffer {
 
 const canvas = () => screen.getByRole('img') as HTMLCanvasElement;
 const range = () => screen.getByRole('figure').textContent ?? '';
+
+/** What the last drag selected, and where the sound is — the screen's half of the wiring. */
+let selected: Selection | null;
+let head: number | null;
+/** The one decoded recording of a case: built once, or every render would walk it again. */
+let buffer: AudioBuffer;
+
+/**
+ * The waveform with the state it is normally given: the screen owns the stretch, the
+ * component reports drags back to it, and both marks are read once a frame.
+ */
+function Wired() {
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const cursor = useRef<number | null>(null);
+  return (
+    <Waveform
+      buffer={buffer}
+      selection={selection}
+      onSelect={(next) => {
+        selected = next;
+        setSelection(next);
+      }}
+      onSeek={(seconds) => (cursor.current = seconds)}
+      cursorSec={() => cursor.current}
+      playheadSec={() => head}
+    />
+  );
+}
+
+function draw(): void {
+  selected = null;
+  head = null;
+  buffer = recording();
+  render(<Wired />);
+}
+
+/** A vertical mark, two pixels wide, the full height — a cursor, an edge or the playhead. */
+const markedAt = (x: number): boolean =>
+  context.fillRect.mock.calls.some(
+    ([left, top, width]) => left === x - 1 && top === 0 && width === 2,
+  );
 
 /** A pointer event as the browser would send it. jsdom has no `PointerEvent` of its own. */
 function point(type: string, clientX: number, pointerId = 1): void {
@@ -91,7 +135,7 @@ afterEach(() => {
 
 describe('the waveform', () => {
   it('draws the whole recording, a column per pixel', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
 
     await waitFor(() => expect(context.fill).toHaveBeenCalled());
     expect(context.rect).toHaveBeenCalledTimes(WIDTH);
@@ -99,7 +143,7 @@ describe('the waveform', () => {
   });
 
   it('zooms around the pointer on the wheel', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
 
     // A notch in, with the pointer on the middle of the canvas.
     fireEvent.wheel(canvas(), { deltaY: -100, clientX: WIDTH / 2 });
@@ -109,7 +153,7 @@ describe('the waveform', () => {
   });
 
   it('zooms without going back to the samples', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
     await waitFor(() => expect(context.fill).toHaveBeenCalled());
 
     for (let notch = 0; notch < 10; notch += 1) {
@@ -121,7 +165,7 @@ describe('the waveform', () => {
   });
 
   it('pans sideways on a horizontal wheel', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
     fireEvent.wheel(canvas(), { deltaY: -400, clientX: WIDTH / 2 });
     await waitFor(() => expect(range()).toMatch(/^Showing 0:1/));
 
@@ -130,21 +174,26 @@ describe('the waveform', () => {
     await waitFor(() => expect(range()).toBe('Showing 0:00 – 0:27'));
   });
 
-  it('drags the waveform under the finger', async () => {
-    render(<Waveform buffer={recording()} />);
+  it('drags the waveform under two fingers', async () => {
+    draw();
     fireEvent.wheel(canvas(), { deltaY: -400, clientX: WIDTH / 2 });
     await waitFor(() => expect(range()).toBe('Showing 0:17 – 0:43'));
 
-    point('pointerdown', 400);
-    point('pointermove', 450);
-    point('pointerup', 450);
+    point('pointerdown', 400, 1);
+    point('pointerdown', 420, 2);
+    point('pointermove', 450, 1);
+    point('pointermove', 470, 2);
+    point('pointerup', 450, 1);
+    point('pointerup', 470, 2);
 
     // Dragged to the right by a tenth of the canvas: the view moved back by a tenth of it.
     await waitFor(() => expect(range()).toBe('Showing 0:14 – 0:41'));
+    // And what the fingers were over was never mistaken for a stretch to loop.
+    expect(selected).toBeNull();
   });
 
   it('pinches two fingers apart to zoom in', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
 
     point('pointerdown', 200, 1);
     point('pointerdown', 300, 2);
@@ -158,7 +207,7 @@ describe('the waveform', () => {
   });
 
   it('puts the cursor down where it was clicked, without a render', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
     await waitFor(() => expect(context.fill).toHaveBeenCalled());
     const before = range();
 
@@ -170,20 +219,95 @@ describe('the waveform', () => {
     expect(range()).toBe(before);
   });
 
-  it('leaves the cursor alone when the click was the end of a drag', async () => {
-    render(<Waveform buffer={recording()} />);
+  it('selects the stretch a finger was dragged across', async () => {
+    draw();
     await waitFor(() => expect(context.fill).toHaveBeenCalled());
 
-    point('pointerdown', 250);
+    point('pointerdown', 100);
     point('pointermove', 300);
     point('pointerup', 300);
 
-    await repainted();
-    expect(context.fillRect).not.toHaveBeenCalledWith(expect.anything(), 0, 2, HEIGHT);
+    // A fifth of the minute in, to three fifths of the way across it.
+    expect(selected).toEqual({ fromSec: 12, toSec: 36 });
+    // Drawn as a band the height of the canvas, with a mark on each edge.
+    await waitFor(() => expect(context.fillRect).toHaveBeenCalledWith(100, 0, 200, HEIGHT));
+    expect(markedAt(100)).toBe(true);
+    expect(markedAt(300)).toBe(true);
+    // The drag was a selection, not a click: the cursor stayed where it was not.
+    expect(range()).toBe('Showing 0:00 – 1:00');
+  });
+
+  it('selects the same stretch dragged the other way', async () => {
+    draw();
+
+    point('pointerdown', 300);
+    point('pointermove', 100);
+    point('pointerup', 100);
+
+    expect(selected).toEqual({ fromSec: 12, toSec: 36 });
+  });
+
+  it('takes hold of an edge to move it, leaving the other one where it is', async () => {
+    draw();
+    point('pointerdown', 100);
+    point('pointermove', 300);
+    point('pointerup', 300);
+    expect(selected).toEqual({ fromSec: 12, toSec: 36 });
+
+    // Landing within reach of the far edge and dragging it further out.
+    point('pointerdown', 303);
+    point('pointermove', 400);
+    point('pointerup', 400);
+
+    expect(selected).toEqual({ fromSec: 12, toSec: 48 });
+  });
+
+  it('gives the stretch back when a second finger turns the drag into a pinch', async () => {
+    draw();
+    point('pointerdown', 100);
+    point('pointermove', 300);
+    point('pointerup', 300);
+    const before = selected;
+
+    point('pointerdown', 200, 1);
+    point('pointermove', 250, 1);
+    expect(selected).not.toEqual(before);
+
+    point('pointerdown', 300, 2);
+    point('pointermove', 200, 1);
+    point('pointermove', 400, 2);
+    point('pointerup', 200, 1);
+    point('pointerup', 400, 2);
+
+    // The pinch zoomed, and the stretch that was showing survived it untouched.
+    await waitFor(() => expect(range()).not.toBe('Showing 0:00 – 1:00'));
+    expect(selected).toEqual(before);
+  });
+
+  it('moves the playhead without a render', async () => {
+    draw();
+    await waitFor(() => expect(context.fill).toHaveBeenCalled());
+    const settled = range();
+
+    head = 30;
+    await waitFor(() => expect(markedAt(WIDTH / 2)).toBe(true));
+
+    head = 45;
+    await waitFor(() => expect(markedAt((WIDTH * 3) / 4)).toBe(true));
+    expect(range()).toBe(settled);
+  });
+
+  it('paints nothing new while nothing moves', async () => {
+    draw();
+    await waitFor(() => expect(context.fill).toHaveBeenCalled());
+    const settled = context.fill.mock.calls.length;
+
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(context.fill.mock.calls.length).toBe(settled);
   });
 
   it('repaints when the system changes theme', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
     await waitFor(() => expect(context.fill).toHaveBeenCalled());
     const settled = context.fill.mock.calls.length;
 
@@ -196,7 +320,7 @@ describe('the waveform', () => {
   });
 
   it('moves along the recording from the keyboard', async () => {
-    render(<Waveform buffer={recording()} />);
+    draw();
 
     fireEvent.keyDown(canvas(), { key: '+' });
     await waitFor(() => expect(range()).toBe('Showing 0:10 – 0:50'));
