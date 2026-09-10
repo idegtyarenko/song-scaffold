@@ -42,8 +42,15 @@ export interface Pass {
   offsetSec: number;
   durationSec: number;
   levels: Level[];
-  /** Whether it was told to stop at all, and if so when — `null` for "right now". */
-  stopped: boolean;
+  /**
+   * Cut off rather than left to finish.
+   *
+   * Every pass is told when to stop the moment it is scheduled — that is its natural end.
+   * Being told to stop with no time at all is a different thing entirely: it is a silencing,
+   * and it is the only one of the two worth asserting about.
+   */
+  silenced: boolean;
+  /** When it was told to end, or `null` when it was silenced where it stood. */
   stoppedAt: number | null;
   /** Report the sound as over, the way the browser does when a source runs out. */
   end: () => void;
@@ -132,7 +139,7 @@ export class FakeAudioContext {
           offsetSec,
           durationSec,
           levels,
-          stopped: false,
+          silenced: false,
           stoppedAt: null,
           end: () => source.onended?.call(source, new Event('ended')),
         };
@@ -140,7 +147,7 @@ export class FakeAudioContext {
       },
       stop: (at?: number) => {
         if (!pass) return;
-        pass.stopped = true;
+        pass.silenced = at === undefined;
         pass.stoppedAt = at ?? null;
       },
     };

@@ -30,6 +30,8 @@ export default defineConfig({
         'src/main.tsx',
         // The vocabulary the screen tests are written in — test code that happens to live in src.
         'src/app-harness.tsx',
+        // The same, for the recording screen's two test files, which share a way of driving it.
+        'src/screens/recording/harness.tsx',
         // The Web Audio double the tests hear. Test code too; it sits in the audio layer
         // because the layer rule puts it there, not because the app ever runs it.
         'src/audio/fake-context.ts',

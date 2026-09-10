@@ -7,17 +7,16 @@
  * application knows about the file is visible to the person who picked it, fingerprint
  * included.
  *
- * Two things are the screen's to hold rather than the waveform's. The stretch to loop, in
- * state, because it is what the transport has to put into words. And the cursor, in a ref,
- * because it is a mark on a canvas that repaints itself and nothing in the markup reads it.
- * The playhead belongs to neither: it is asked of the player once a frame.
+ * What it holds is the file: choosing one, decoding it, and saying what went wrong when that
+ * fails. Everything that makes a sound — the loop, the click, the cursor and the playhead —
+ * belongs to `useTransport` next door, because all of it turns on one requirement this screen
+ * has no opinion about: the recording and the click begin on the same moment of the clock.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import './RecordingScreen.css';
 import { audio } from '../../audio/engine';
-import { LoopPlayer } from '../../audio/player';
 import { RecordingLoadError, RecordingSlot, type Recording } from '../../audio/recording';
 import {
   formatBytes,
@@ -25,13 +24,14 @@ import {
   shortFingerprint,
   type AudioPassport,
 } from '../../model/recording';
-import type { Selection } from '../../model/selection';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { cx } from '../../ui/classes';
 import { Waveform } from '../../waveform/Waveform';
 import { useShortcuts } from '../useShortcuts';
+import { ClickTrack } from './ClickTrack';
 import { Transport } from './Transport';
+import { useTransport } from './useTransport';
 
 interface RecordingScreenProps {
   onBack: () => void;
@@ -49,28 +49,21 @@ const UNEXPECTED = 'The recording could not be opened. Try another file.';
 export function RecordingScreen({ onBack }: RecordingScreenProps) {
   const [slot] = useState(() => new RecordingSlot(audio));
   const [status, setStatus] = useState<Status>({ kind: 'empty' });
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const cursor = useRef<number | null>(null);
-  // The player tells the screen when the sound has run out on its own, which is the only
-  // way the button gets back to "Play" after a single pass reaches the end.
-  const [player] = useState(() => new LoopPlayer(audio, () => setPlaying(false)));
   // Dragging over the drop zone, so it can say it will take what is being carried. Kept in
   // state rather than in a class on the node: the zone is React's, not a canvas.
   const [carrying, setCarrying] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
 
+  const open = status.kind === 'open' ? status.recording : null;
+  const transport = useTransport(open?.buffer ?? null);
+
   const busy = status.kind === 'opening';
 
-  async function open(file: File): Promise<void> {
+  async function load(file: File): Promise<void> {
     setStatus({ kind: 'opening', fileName: file.name });
     try {
       const recording = await slot.load(file);
-      // A new recording is a new everything: the stretch and the cursor belonged to audio
-      // that is no longer open, and so did whatever was playing.
-      stop();
-      setSelection(null);
-      cursor.current = null;
+      transport.reset();
       setStatus({ kind: 'open', recording });
     } catch (error) {
       // Anything the loader itself raised already carries wording for a person; anything
@@ -82,49 +75,18 @@ export function RecordingScreen({ onBack }: RecordingScreenProps) {
     }
   }
 
-  function stop(): void {
-    player.stop();
-    setPlaying(false);
-  }
-
-  /**
-   * Play what is asked for: the selected stretch, round and round, or the rest of the
-   * recording from the cursor. Pressing it while something is playing stops it, so one
-   * control and one key cover the whole transport.
-   */
-  function toggle(): void {
-    if (playing) return stop();
-    if (status.kind !== 'open') return;
-    const buffer = status.recording.buffer;
-    const span = selection ?? { fromSec: cursor.current ?? 0, toSec: buffer.duration };
-    player.play(buffer, span, { loop: selection !== null });
-    setPlaying(true);
-  }
-
-  /** A new stretch under a running loop is a new loop, not a loop of the old stretch. */
-  function select(next: Selection | null): void {
-    setSelection(next);
-    if (!playing || status.kind !== 'open') return;
-    if (next) player.play(status.recording.buffer, next, { loop: true });
-    else stop();
-  }
-
-  // Nothing outlives the screen: leaving it with a loop still running would carry the sound
-  // into the setup form, which has no way to stop it.
-  useEffect(() => () => player.stop(), [player]);
-
   useShortcuts({
-    Space: toggle,
+    Space: transport.toggle,
     // One key for both, in the order a hand reaches for it: stop what is playing, and press
     // it again to put the loop away.
-    Escape: () => (playing ? stop() : select(null)),
+    Escape: () => (transport.playing ? transport.stopAll() : transport.select(null)),
   });
 
   function choose(file: File | undefined): void {
     // One file: a drop of several is a slip, and picking one of them for the player would
     // be guessing. Nothing opens until they drop the one they meant.
     if (!file || busy) return;
-    void open(file);
+    void load(file);
   }
 
   return (
@@ -188,26 +150,31 @@ export function RecordingScreen({ onBack }: RecordingScreenProps) {
         </p>
       )}
 
-      {status.kind === 'open' && (
+      {open && (
         <>
           {/* Keyed by the recording it draws: a new file is a new waveform, zoomed out and
               with no cursor, rather than an old view pointing into audio that is gone. */}
           <Waveform
-            key={status.recording.passport.sha256}
-            buffer={status.recording.buffer}
-            selection={selection}
-            onSelect={select}
-            onSeek={(seconds) => (cursor.current = seconds)}
-            cursorSec={() => cursor.current}
-            playheadSec={() => player.positionSec()}
+            key={open.passport.sha256}
+            buffer={open.buffer}
+            selection={transport.selection}
+            onSelect={transport.select}
+            onSeek={transport.seek}
+            cursorSec={transport.cursorSec}
+            playheadSec={transport.playheadSec}
           />
           <Transport
-            playing={playing}
-            selection={selection}
-            onToggle={toggle}
-            onClear={() => select(null)}
+            playing={transport.playing}
+            selection={transport.selection}
+            onToggle={transport.toggle}
+            onClear={() => transport.select(null)}
           />
-          <Passport passport={status.recording.passport} />
+          <ClickTrack
+            settings={transport.click}
+            selection={transport.selection}
+            onChange={transport.adjust}
+          />
+          <Passport passport={open.passport} />
         </>
       )}
 
@@ -218,7 +185,7 @@ export function RecordingScreen({ onBack }: RecordingScreenProps) {
         onClick={() => {
           // The decoded audio goes with the screen: leaving it behind would keep a hundred
           // megabytes alive for a session that has no use for it.
-          stop();
+          transport.stopAll();
           slot.release();
           onBack();
         }}

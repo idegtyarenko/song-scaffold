@@ -132,7 +132,7 @@ describe('a loop', () => {
     expect(loop.playing).toBe(false);
     expect(loop.positionSec()).toBeNull();
     expect(stopped).toBe(1);
-    for (const pass of passes()) expect(pass.stopped).toBe(true);
+    for (const pass of passes()) expect(pass.silenced).toBe(true);
 
     runClock(5);
     expect(passes()).toHaveLength(scheduled);
@@ -159,7 +159,7 @@ describe('a loop', () => {
     expect(
       passes()
         .slice(0, before)
-        .every((pass) => pass.stopped),
+        .every((pass) => pass.silenced),
     ).toBe(true);
     expect(
       passes()

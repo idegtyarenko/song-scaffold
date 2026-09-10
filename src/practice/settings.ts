@@ -1,6 +1,7 @@
 /** Setup form values: defaults, validation and persistence. */
 
 import { DEFAULT_METER_ID, findMeter } from '../model/meter';
+import { TEMPO_RANGE } from '../model/tempo';
 import { suggestRungs } from './sequence';
 
 export interface Settings {
@@ -18,7 +19,9 @@ export interface Settings {
 
 export const LIMITS = {
   totalSegments: { min: 1, max: 15 },
-  tempo: { min: 20, max: 300 },
+  // The range a metronome is worth having is music, not method: it is the same whether the
+  // tempo was typed into this form or divided out of a loop.
+  tempo: TEMPO_RANGE,
   rungs: { min: 2, max: 30 },
 } as const;
 
