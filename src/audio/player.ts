@@ -167,7 +167,7 @@ export class LoopPlayer {
     gain.gain.setValueAtTime(1, at + length);
     gain.gain.linearRampToValueAtTime(0, at + length + tail);
 
-    source.connect(gain).connect(this.#engine.output);
+    source.connect(gain).connect(this.#engine.musicOut);
     source.start(at, this.#span.fromSec, length + tail);
     source.stop(at + length + tail);
 

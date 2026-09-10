@@ -152,7 +152,7 @@ export class Metronome {
     envelope.gain.linearRampToValueAtTime(gain, at + 0.002);
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + 0.05);
 
-    oscillator.connect(envelope).connect(this.engine.output);
+    oscillator.connect(envelope).connect(this.engine.clickOut);
     oscillator.start(at);
     oscillator.stop(at + 0.06);
     this.scheduled.push(oscillator);

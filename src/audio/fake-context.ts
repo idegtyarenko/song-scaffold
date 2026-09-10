@@ -24,6 +24,14 @@ export interface Level {
   at: number;
 }
 
+/** A gain the tests can read back: the level it sits at, its curve, and where it goes. */
+export interface FakeGain {
+  levels: Level[];
+  connected: unknown[];
+  gain: { value: number } & Record<string, unknown>;
+  connect: (node: unknown) => unknown;
+}
+
 /**
  * One scheduled pass of a recording: where in the recording it reads from, when it sounds,
  * how much of it is played, and the shape it is faded with. Enough to tell a loop that
@@ -43,6 +51,7 @@ export interface Pass {
 
 let scheduled: Click[] = [];
 let played: Pass[] = [];
+let gains: FakeGain[] = [];
 let built = 0;
 let latest: FakeAudioContext | null = null;
 let decoder: ((bytes: ArrayBuffer) => Promise<AudioBuffer>) | null = null;
@@ -80,18 +89,26 @@ export class FakeAudioContext {
    */
   createGain() {
     const levels: Level[] = [];
+    const connected: unknown[] = [];
     const at = (value: number, when: number) => {
       levels.push({ value, at: when });
     };
-    return {
+    const node: FakeGain = {
       levels,
+      connected,
       gain: {
+        value: 1,
         setValueAtTime: vi.fn(at),
         linearRampToValueAtTime: vi.fn(at),
         exponentialRampToValueAtTime: vi.fn(at),
       },
-      connect: (node: unknown) => node,
+      connect: (to: unknown) => {
+        connected.push(to);
+        return to;
+      },
     };
+    gains.push(node);
+    return node;
   }
 
   /**
@@ -151,6 +168,7 @@ export class FakeAudioContext {
 export function stubAudio(): void {
   forgetClicks();
   played = [];
+  gains = [];
   decoder = null;
   built = 0;
   latest = null;
@@ -164,6 +182,9 @@ export function decodesWith(decode: (bytes: ArrayBuffer) => Promise<AudioBuffer>
 
 /** Every pass of a recording scheduled since the last `stubAudio()`, in order. */
 export const passes = (): Pass[] => played;
+
+/** Every gain node built since the last `stubAudio()`, in order — buses and envelopes alike. */
+export const gainsBuilt = (): FakeGain[] => gains;
 
 /** Every click scheduled since the last `forgetClicks()`, in order. */
 export const clicks = (): Click[] => scheduled;

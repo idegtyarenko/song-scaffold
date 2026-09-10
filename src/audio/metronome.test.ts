@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioEngine } from './engine';
 import { Metronome, type Beat, type MetronomeConfig } from './metronome';
-import { clicks, runClock, stubAudio } from './fake-context';
+import { clicks, gainsBuilt, runClock, stubAudio } from './fake-context';
 
 let engine: AudioEngine;
 
@@ -15,6 +15,13 @@ const FOUR_FOUR: MetronomeConfig = {
 };
 
 describe('Metronome', () => {
+  it('sounds through the click bus, so its level moves against a recording', () => {
+    new Metronome(engine, FOUR_FOUR, () => {}).start();
+
+    // The envelope of the first click, and where it goes: the bus, not the speakers.
+    expect(gainsBuilt()[0]!.connected).toContain(engine.clickOut);
+  });
+
   it('begins at the moment it was handed, so a recording can begin at the same one', () => {
     const moment = engine.soon();
 

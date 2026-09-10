@@ -9,6 +9,12 @@
  * resumes it, and every gesture anywhere in the app resumes whatever context exists — no
  * individual button has to remember to, and no sound is lost because the wrong one was
  * pressed first.
+ *
+ * And the two things that sound go to two buses rather than to the speakers directly. The
+ * recording is the reference and stays where it is; the click moves against it, because
+ * that is the adjustment a player actually wants — a click that cuts through a loud
+ * recording, or gets out of the way of a quiet one. One number, and nothing to put back
+ * when a screen is left.
  */
 
 /** Gestures the autoplay policy accepts as "the user is here". */
@@ -25,8 +31,13 @@ const UNLOCK_EVENTS = ['pointerdown', 'touchstart', 'keydown'] as const;
  */
 const LEAD_S = 0.08;
 
+/** How far the click may be pushed against the recording, and where it sits by default. */
+export const CLICK_LEVEL = { min: 0, max: 1.5, default: 1 } as const;
+
 export class AudioEngine {
   #context: AudioContext | null = null;
+  #click: GainNode | null = null;
+  #level: number = CLICK_LEVEL.default;
 
   /**
    * The context, created on first use.
@@ -53,9 +64,35 @@ export class AudioEngine {
     return this.currentTime + LEAD_S;
   }
 
-  /** Where everything that sounds connects. */
-  get output(): AudioNode {
+  /** Where a recording connects: the reference the click is set against. */
+  get musicOut(): AudioNode {
     return this.context.destination;
+  }
+
+  /** Where the click connects — through the gain the level below moves. */
+  get clickOut(): AudioNode {
+    if (!this.#click) {
+      this.#click = this.context.createGain();
+      this.#click.gain.value = this.#level;
+      this.#click.connect(this.context.destination);
+    }
+    return this.#click;
+  }
+
+  /**
+   * How loud the click is against the recording. Held here rather than on a screen, so it
+   * is one setting for the whole application and survives walking between screens.
+   *
+   * Set before anything has sounded, it is remembered and applied to the bus when one is
+   * built — a level chosen on a silent screen is not a level thrown away.
+   */
+  get clickLevel(): number {
+    return this.#level;
+  }
+
+  set clickLevel(level: number) {
+    this.#level = Math.min(CLICK_LEVEL.max, Math.max(CLICK_LEVEL.min, level));
+    if (this.#click) this.#click.gain.value = this.#level;
   }
 
   /**
