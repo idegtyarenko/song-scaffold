@@ -18,15 +18,47 @@ export interface Click {
   at: number;
 }
 
+/** One point of a gain curve: what the level becomes, and when it gets there. */
+export interface Level {
+  value: number;
+  at: number;
+}
+
+/**
+ * One scheduled pass of a recording: where in the recording it reads from, when it sounds,
+ * how much of it is played, and the shape it is faded with. Enough to tell a loop that
+ * keeps its period from one that drifts, and a crossfaded seam from a cut one.
+ */
+export interface Pass {
+  at: number;
+  offsetSec: number;
+  durationSec: number;
+  levels: Level[];
+  /** Whether it was told to stop at all, and if so when — `null` for "right now". */
+  stopped: boolean;
+  stoppedAt: number | null;
+  /** Report the sound as over, the way the browser does when a source runs out. */
+  end: () => void;
+}
+
 let scheduled: Click[] = [];
+let played: Pass[] = [];
 let built = 0;
 let latest: FakeAudioContext | null = null;
+let decoder: ((bytes: ArrayBuffer) => Promise<AudioBuffer>) | null = null;
 
 /** A context that plays nothing and writes down what it was asked to play. */
 export class FakeAudioContext {
   state: AudioContextState = 'suspended';
   currentTime = 0;
   destination = { id: 'destination' } as unknown as AudioNode;
+
+  /**
+   * jsdom decodes nothing, so what comes back is whatever the test said it would —
+   * a buffer of its own making, or a refusal like the one a real codec gives.
+   */
+  decodeAudioData = (bytes: ArrayBuffer): Promise<AudioBuffer> =>
+    decoder?.(bytes) ?? Promise.reject(new DOMException('no decoder', 'EncodingError'));
 
   /** iOS suspends the context on an interruption; the next gesture has to bring it back. */
   resume = vi.fn(async () => {
@@ -41,15 +73,61 @@ export class FakeAudioContext {
     latest = this;
   }
 
+  /**
+   * A gain that remembers its curve. The clicks never look at it, but a loop is judged by
+   * exactly this: whether the level was on its way down while the next pass was on its way
+   * up, or whether the two met at an edge.
+   */
   createGain() {
+    const levels: Level[] = [];
+    const at = (value: number, when: number) => {
+      levels.push({ value, at: when });
+    };
     return {
+      levels,
       gain: {
-        setValueAtTime: vi.fn(),
-        linearRampToValueAtTime: vi.fn(),
-        exponentialRampToValueAtTime: vi.fn(),
+        setValueAtTime: vi.fn(at),
+        linearRampToValueAtTime: vi.fn(at),
+        exponentialRampToValueAtTime: vi.fn(at),
       },
       connect: (node: unknown) => node,
     };
+  }
+
+  /**
+   * A source that plays nothing and writes down what it was asked to play — including the
+   * gain it was routed through, so a pass and the shape it fades with are read together.
+   */
+  createBufferSource() {
+    let levels: Level[] = [];
+    let pass: Pass | null = null;
+    const source = {
+      buffer: null as AudioBuffer | null,
+      onended: null as ((this: unknown, event: Event) => unknown) | null,
+      connect: (node: unknown) => {
+        const gain = node as { levels?: Level[] };
+        if (Array.isArray(gain.levels)) levels = gain.levels;
+        return node;
+      },
+      start: (at: number, offsetSec = 0, durationSec = 0) => {
+        pass = {
+          at,
+          offsetSec,
+          durationSec,
+          levels,
+          stopped: false,
+          stoppedAt: null,
+          end: () => source.onended?.call(source, new Event('ended')),
+        };
+        played.push(pass);
+      },
+      stop: (at?: number) => {
+        if (!pass) return;
+        pass.stopped = true;
+        pass.stoppedAt = at ?? null;
+      },
+    };
+    return source;
   }
 
   createOscillator() {
@@ -72,10 +150,20 @@ export class FakeAudioContext {
  */
 export function stubAudio(): void {
   forgetClicks();
+  played = [];
+  decoder = null;
   built = 0;
   latest = null;
   vi.stubGlobal('AudioContext', FakeAudioContext);
 }
+
+/** What the next decode answers: a buffer of the test's making, or a refusal. */
+export function decodesWith(decode: (bytes: ArrayBuffer) => Promise<AudioBuffer>): void {
+  decoder = decode;
+}
+
+/** Every pass of a recording scheduled since the last `stubAudio()`, in order. */
+export const passes = (): Pass[] => played;
 
 /** Every click scheduled since the last `forgetClicks()`, in order. */
 export const clicks = (): Click[] => scheduled;

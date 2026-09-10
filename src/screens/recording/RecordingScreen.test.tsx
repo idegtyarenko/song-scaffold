@@ -3,22 +3,19 @@
  * The screen as the player works it: a file chosen with the button or carried onto the
  * drop zone, the passport that comes back, and what is said when the file will not open.
  *
- * The audio context is a double, as everywhere else here — the real one decodes nothing in
- * jsdom, and what is being checked is the screen, not the codec. The waveform it hands the
- * decoded buffer to is the real component: jsdom lays it out to nothing, so it draws
- * nothing, which is exactly as much as this file has an opinion about.
+ * The audio context is the double the whole app is tested against — the real one decodes
+ * nothing in jsdom, and what is being checked is the screen, not the codec. The waveform it
+ * hands the decoded buffer to is the real component: jsdom lays it out to nothing, so it
+ * draws nothing, which is exactly as much as this file has an opinion about.
  */
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-/** How the double answers the next decode: a buffer of this length, or a refusal. */
-let decodes: (() => Promise<AudioBuffer>) | null = null;
+import { decodesWith, stubAudio } from '../../audio/fake-context';
 
-class FakeAudioContext {
-  decodeAudioData = () =>
-    decodes?.() ?? Promise.reject(new DOMException('no decoder', 'EncodingError'));
-}
+/** How the double answers the next decode: a buffer of some length, or a refusal. */
+let decodes: () => Promise<AudioBuffer>;
 
 const $ = <T extends HTMLElement>(selector: string): T => {
   const found = document.querySelector<T>(selector);
@@ -32,7 +29,8 @@ const file = (name: string, contents = 'hello') =>
 /** The engine is a module-level singleton, so the screen is imported per test. */
 async function openScreen(onBack = () => {}) {
   vi.resetModules();
-  vi.stubGlobal('AudioContext', FakeAudioContext);
+  stubAudio();
+  decodesWith(() => decodes());
   const { RecordingSlot } = await import('../../audio/recording');
   const releases = vi.spyOn(RecordingSlot.prototype, 'release');
   const { RecordingScreen } = await import('./RecordingScreen');
