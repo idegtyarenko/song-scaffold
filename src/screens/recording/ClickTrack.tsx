@@ -1,10 +1,15 @@
 /**
  * The click that stands over the loop.
  *
- * Two numbers make it: how many beats are in the loop, and what the time signature is. The
- * tempo is neither typed nor tapped — it is division, `beats × 60 / length`, and it is shown
- * rather than edited. Counting the beats of a phrase you have just dragged out is something
- * a musician does without thinking; naming its BPM is not.
+ * Two numbers make it: how many bars are in the loop, and what the time signature is. The
+ * tempo is neither typed nor tapped — it is division, `bars × beats-per-bar × 60 / length`,
+ * and it is shown rather than edited. Counting the bars of a phrase you have just dragged out
+ * is something a musician does without thinking; naming its BPM is not.
+ *
+ * Bars rather than beats, and the difference is not only convenience. A loop measured in
+ * bars holds a whole number of them by construction, so the downbeat falls on the seam every
+ * time round. Measured in beats it need not: seven beats of 4/4 puts the seam on the third
+ * beat of a bar, and the click would be in the music without being in time with it.
  *
  * Without a stretch there is no length to divide, so there is no click here. That is not a
  * gap: practising to a click with no recording is the session screen, which is a first-class
@@ -22,7 +27,7 @@ import { Field } from '../../ui/Field';
 /** What the click is set to, and what the screen has to hand back when it changes. */
 export interface ClickSettings {
   on: boolean;
-  beats: number;
+  bars: number;
   meterId: string;
   level: number;
 }
@@ -36,20 +41,22 @@ interface ClickTrackProps {
 
 export const DEFAULT_CLICK: ClickSettings = {
   on: false,
-  beats: 8,
+  bars: 2,
   meterId: DEFAULT_METER_ID,
   level: CLICK_LEVEL.default,
 };
 
-/** Beats a loop may plausibly be said to hold. Beyond this the tempo is out of range anyway. */
-const BEATS = { min: 1, max: 64 } as const;
+/** Bars a loop may plausibly be said to hold. Beyond this the tempo is out of range anyway. */
+const BARS = { min: 1, max: 32 } as const;
 
 /**
  * The tempo a click over this stretch would run at, or nothing when the answer is not one
  * anybody can practise to. Exported because the screen has to build the same grid to sound.
  */
 export function tempoOf(settings: ClickSettings, selection: Selection | null): number | null {
-  return selection ? tempoForBeats(selectionLength(selection), settings.beats) : null;
+  if (!selection) return null;
+  const beats = settings.bars * findMeter(settings.meterId).beatsPerBar;
+  return tempoForBeats(selectionLength(selection), beats);
 }
 
 export function ClickTrack({ settings, selection, onChange }: ClickTrackProps) {
@@ -71,16 +78,16 @@ export function ClickTrack({ settings, selection, onChange }: ClickTrackProps) {
         />
 
         <div className="click__fields">
-          <Field htmlFor="clickBeats" label="Beats in the loop">
+          <Field htmlFor="clickBars" label="Bars in the loop">
             <input
               className="field__input"
-              id="clickBeats"
+              id="clickBars"
               type="number"
               inputMode="numeric"
-              min={BEATS.min}
-              max={BEATS.max}
-              value={settings.beats}
-              onChange={(event) => onChange({ beats: Number(event.target.value) })}
+              min={BARS.min}
+              max={BARS.max}
+              value={settings.bars}
+              onChange={(event) => onChange({ bars: Number(event.target.value) })}
             />
           </Field>
 
@@ -129,11 +136,11 @@ function reading(
   if (!selection) return 'Drag a loop out of the waveform, and the click will follow it.';
 
   const length = selectionLength(selection).toFixed(1);
-  const beats = `${settings.beats} ${settings.beats === 1 ? 'beat' : 'beats'}`;
+  const bars = `${settings.bars} ${settings.bars === 1 ? 'bar' : 'bars'} of ${settings.meterId}`;
   if (tempo === null) {
-    return `${length} s ÷ ${beats} is not a tempo to practise to. Try a different count.`;
+    return `${length} s ÷ ${bars} is not a tempo to practise to. Try a different count.`;
   }
 
   const extra = subdivided ? `, clicking ${subdivided}` : '';
-  return `${length} s ÷ ${beats} · ${settings.meterId} → ${Math.round(tempo)} BPM${extra}`;
+  return `${length} s ÷ ${bars} → ${Math.round(tempo)} BPM${extra}`;
 }

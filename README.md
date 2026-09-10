@@ -100,19 +100,22 @@ the cursor — and `Esc` stops, then clears the loop.
 
 ### The click over it
 
-Tick **Click over the loop** and say how many **beats** are in the stretch you selected. The
-tempo is not typed and not tapped — it is division, `beats × 60 / length`, shown rather than
-edited. Counting the beats of a phrase you have just dragged out is something a musician does
-without thinking; naming its BPM is not. The time signature decides only where the accents
-fall and whether the pulse gets extra clicks; it does not have to divide the loop, so a
-seven-beat loop in 4/4 is a thing you can ask for.
+Tick **Click over the loop**, pick the time signature, and say how many **bars** are in the
+stretch you selected. The tempo is not typed and not tapped — it is division,
+`bars × beats-per-bar × 60 / length`, shown rather than edited. Counting the bars of a phrase
+you have just dragged out is something a musician does without thinking; naming its BPM is
+not.
 
-That division is also why the click does not drift. Its period is exactly the length of the
-loop over the beats in it, so it divides the loop without remainder; the recording and the
-click are started from **one reading of the audio clock**; and so the downbeat lands on the
-seam on the first pass and on the thousandth. Nothing re-synchronises, because nothing goes
-out of step — the test for it runs the pair for two minutes and looks for a click on every
-seam.
+Bars rather than beats, and the difference is not only convenience. A loop measured in bars
+holds a whole number of them by construction, so its period is a whole number of bar-periods
+and **the downbeat lands on the seam every time round**. Measured in beats it need not: seven
+beats of 4/4 puts the seam on the third beat of a bar, and a click can be exactly in time
+without ever being on the downbeat.
+
+That is what keeps the click from drifting, together with the other half of it: the recording
+and the click are started from **one reading of the audio clock**. Nothing re-synchronises,
+because nothing goes out of step — and the test for it runs the pair for two minutes and
+insists on a downbeat, not merely some click, on every seam.
 
 **Click level** moves the click against the recording. The recording is the reference and
 stays where it is, which is the adjustment that is actually wanted: a click that cuts through

@@ -4,8 +4,9 @@
  *
  * The two are one subject because of one requirement — they begin on the same moment of the
  * audio clock — and the case that matters most here is the one that proves it: a loop left
- * running for two minutes with every downbeat still landing on its seam. Nothing
- * re-synchronises; the click's period divides the loop, and both are counted from one clock.
+ * running for two minutes with a downbeat, not just any click, still landing on every seam.
+ * Nothing re-synchronises; the loop is a whole number of bars, so the click's period divides
+ * it, and both are counted from one clock.
  *
  * Driven through the real screen rather than through the hook, because what a player has is
  * the screen: a drag, a space bar, a number typed into a field.
@@ -15,6 +16,9 @@ import { cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { clicks, forgetClicks, passes, runClock } from '../../audio/fake-context';
+
+/** The pitch the metronome gives the first beat of a bar. */
+const DOWNBEAT = 1600;
 import {
   $,
   bus,
@@ -188,14 +192,16 @@ describe('the click over the loop', () => {
   it('divides the loop by the beats in it and says what that comes to', async () => {
     await withLoop();
 
-    // Twenty seconds and eight beats is a beat every two and a half, and slow enough that
-    // the meter puts a click on the upbeat as well.
-    expect(clickReading()).toBe('20.0 s ÷ 8 beats · 4/4 → 24 BPM, clicking eighths');
+    // Twenty seconds and two bars of 4/4 is eight beats, a beat every two and a half
+    // seconds — slow enough that the meter puts a click on the upbeat as well.
+    expect(clickReading()).toBe('20.0 s ÷ 2 bars of 4/4 → 24 BPM, clicking eighths');
   });
 
   it('says so rather than clicking when the answer is not a tempo to practise to', async () => {
     await withLoop();
-    fireEvent.change($('#clickBeats'), { target: { value: '1' } });
+    // A single bar of 4/4 across twenty seconds is twelve to the minute — a stopped clock.
+    fireEvent.change($('#clickMeter'), { target: { value: '2/4' } });
+    fireEvent.change($('#clickBars'), { target: { value: '1' } });
 
     expect(clickReading()).toMatch(/is not a tempo to practise to/);
 
@@ -208,7 +214,7 @@ describe('the click over the loop', () => {
 
   it('starts and stops with the recording, from one moment', async () => {
     await withLoop();
-    fireEvent.change($('#clickBeats'), { target: { value: '40' } });
+    fireEvent.change($('#clickBars'), { target: { value: '10' } });
     fireEvent.click($('#clickOn'));
     takeTheClock();
 
@@ -225,26 +231,29 @@ describe('the click over the loop', () => {
 
   it('keeps the downbeat on the seam of the loop, pass after pass', async () => {
     await withLoop();
-    // Forty beats in twenty seconds is 120 BPM, and every fortieth beat is a loop.
-    fireEvent.change($('#clickBeats'), { target: { value: '40' } });
+    // Ten bars of 4/4 in twenty seconds is forty beats: 120 BPM, and a downbeat every fourth.
+    fireEvent.change($('#clickBars'), { target: { value: '10' } });
     fireEvent.click($('#clickOn'));
     takeTheClock();
     press(' ');
 
     runClock(120);
 
-    // Every moment a pass begins is a moment a click begins, to the microsecond. Nothing
-    // re-synchronises: the period divides the loop, and both are counted from one clock.
-    const beats = clicks().map((click) => click.at);
+    // Every moment a pass begins is a moment a *downbeat* sounds, to the microsecond — not
+    // merely some click. Nothing re-synchronises: the loop is a whole number of bars, so the
+    // period divides it, and both are counted from one clock.
+    const downbeats = clicks()
+      .filter((click) => click.frequency === DOWNBEAT)
+      .map((click) => click.at);
     expect(passes().length).toBeGreaterThan(3);
     for (const pass of passes()) {
-      expect(beats.some((at) => Math.abs(at - pass.at) < 1e-6)).toBe(true);
+      expect(downbeats.some((at) => Math.abs(at - pass.at) < 1e-6)).toBe(true);
     }
   });
 
   it('moves the click against the recording without stopping either', async () => {
     await withLoop();
-    fireEvent.change($('#clickBeats'), { target: { value: '40' } });
+    fireEvent.change($('#clickBars'), { target: { value: '10' } });
     fireEvent.click($('#clickOn'));
     press(' ');
     const started = passes().length;
@@ -259,7 +268,7 @@ describe('the click over the loop', () => {
 
   it('starts the loop again when the grid under it changes', async () => {
     await withLoop();
-    fireEvent.change($('#clickBeats'), { target: { value: '40' } });
+    fireEvent.change($('#clickBars'), { target: { value: '10' } });
     fireEvent.click($('#clickOn'));
     press(' ');
     const started = passes().length;

@@ -7,11 +7,15 @@
  * same moment of the audio clock**. Split across two owners, that moment becomes two
  * readings, and two readings are two starts.
  *
- * What that moment buys is the whole of TASK-11's first criterion. The click's period is the
- * length of the loop over the beats in it, so it divides the loop without remainder; both
- * are counted from one clock; and therefore the downbeat lands on the seam of the loop on
- * the first pass and on the thousandth, with nothing to accumulate in between. Nothing
+ * What that moment buys is the whole of TASK-11's first criterion. The loop is measured in
+ * bars, so the beats in it are a whole number of bars by construction; the click's period is
+ * the length of the loop over those beats, so it divides the loop without remainder; and both
+ * are counted from one clock. Therefore the **downbeat** lands on the seam of the loop on the
+ * first pass and on the thousandth, with nothing to accumulate in between. Nothing
  * re-synchronises, because nothing goes out of step.
+ *
+ * Measured in beats it would not hold: seven beats of 4/4 puts the seam on the third beat of
+ * a bar, and a click can be exactly in time without ever being on the downbeat.
  *
  * The three kinds of state here are deliberately different. What the transport says is React
  * state, because it is words on screen. The cursor is a ref, because it is a mark on a canvas
