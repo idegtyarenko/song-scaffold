@@ -88,28 +88,50 @@ While practising: `Space` starts and stops the click, `↑`/`↓` move a tempo s
 move a stage. On a window wider than 62rem the ladder sits beside the controls instead of
 folding away underneath it.
 
+## Working on a recording
+
+`#/recording` opens a file from the machine — nothing is uploaded — draws it as a waveform,
+and loops any stretch of it. **Drag across the waveform to select the stretch**; landing on
+an edge takes hold of it, so a loop is resized with the same gesture. **Two fingers pan and
+zoom** (as do the wheel, and `←`/`→`, `+`/`-`, `Home` while the canvas has focus), which is
+what leaves one finger free to select on a phone. A click puts the cursor down. `Space`
+plays and stops — the selected stretch round and round, or the rest of the recording from
+the cursor — and `Esc` stops, then clears the loop.
+
+The seam of a loop is a **crossfade**, not a cut. A looping `AudioBufferSourceNode` leaves
+no gap in time but leaves one in amplitude, and a step in a waveform is a click; heard every
+four seconds for twenty minutes it is the reason the practice stops. So each pass is
+scheduled on its own, and the outgoing one carries on six milliseconds past the end of the
+stretch, fading out, while the incoming one rises from the start of it. The fade is spent on
+material _after_ the stretch and never on shortening it, so a pass still begins exactly
+every `to − from` seconds — an exact period, which is what a click played beside the
+recording will need.
+
 ## Layout
 
 `src/` is laid out by layer, and the layering is enforced rather than remembered:
 `src/code-rules/layers.test.ts` reads the imports back and fails on one pointing the wrong way.
 
-| folder                | what lives there                                                                                                                                                                                                                                                                               |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `model/`              | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`). Pure.                                                                                                                                                                                          |
-| `practice/`           | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four move buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio.                                                                    |
-| `audio/`              | the one `AudioContext` and the gesture that unlocks it (`engine.ts`), and the lookahead scheduler that clicks on its clock (`metronome.ts`). Knows nothing of the method.                                                                                                                      |
-| `ui/`                 | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet.                                                                                                                                                             |
-| `waveform/`           | the recording drawn on a canvas: the peak envelope (`peaks.ts`), the visible stretch and its arithmetic (`view.ts`), the painting (`draw.ts`), the gestures (`gestures.ts`) and the one component that owns them.                                                                              |
-| `screens/`            | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from — and `recording/`, where a file is opened, reachable by address alone until it is worth linking to. |
-| `App.tsx`, `main.tsx` | the entry: mounts the React root and holds the hash routes — the setup form with the session inside it on one, the recording workspace on the other.                                                                                                                                           |
-| `app-harness.tsx`     | test-only, shipped to nobody: boots the whole app on a fake audio clock and reads it back the way a player does.                                                                                                                                                                               |
-| `code-rules/`         | the two tests that measure the tree itself rather than any one file — the layering and the sizes. They read the source through the file system and import none of it.                                                                                                                          |
+| folder                | what lives there                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model/`              | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`), plus what identifies a recording (`recording.ts`) and a stretch of one (`selection.ts`). Pure.                                                                                                                                                                                              |
+| `practice/`           | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four move buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio.                                                                                                                                                                 |
+| `audio/`              | the one `AudioContext` and the gesture that unlocks it (`engine.ts`), the lookahead scheduler that clicks on its clock (`metronome.ts`), the recording read into memory (`recording.ts`) and the looping player with the crossfaded seam (`player.ts`). Knows nothing of the method.                                                                                                        |
+| `ui/`                 | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet.                                                                                                                                                                                                                                                          |
+| `waveform/`           | the recording drawn on a canvas: the peak envelope (`peaks.ts`), the visible stretch and its arithmetic (`view.ts`), the painting (`draw.ts`), the gestures (`gestures.ts`) and the one component that owns them. Two marks on it mean different things — the cursor is where a play would begin, the playhead is where the sound is — and both are read once a frame rather than rendered. |
+| `screens/`            | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from — and `recording/`, where a file is opened, looped and played, reachable by address alone until it is worth linking to.                                                                           |
+| `App.tsx`, `main.tsx` | the entry: mounts the React root and holds the hash routes — the setup form with the session inside it on one, the recording workspace on the other.                                                                                                                                                                                                                                        |
+| `app-harness.tsx`     | test-only, shipped to nobody: boots the whole app on a fake audio clock and reads it back the way a player does.                                                                                                                                                                                                                                                                            |
+| `code-rules/`         | the two tests that measure the tree itself rather than any one file — the layering and the sizes. They read the source through the file system and import none of it.                                                                                                                                                                                                                       |
 
-Everything that sounds is handed the same engine, so the click and anything played beside it
-stand on one clock.
+Everything that sounds is handed the same engine, so the click and the recording stand on
+one clock — which is the whole reason the loop keeps an exact period.
 
 Tests sit beside what they test. `sequence.test.ts` and `session.test.ts` pin the method
-itself; `engine.test.ts` and `metronome.test.ts` drive the audio against a fake clock;
+itself; `engine.test.ts`, `metronome.test.ts` and `player.test.ts` drive the audio against a fake
+clock — the loop's seam is judged there as two numbers rather than by ear: the period the
+passes start on, and whether the outgoing level was still falling while the incoming one was
+rising;
 `SetupScreen.test.tsx` and `SessionScreen.test.tsx` drive the real screens under jsdom with a
 stub `AudioContext`, so the form, the four move buttons, the ladder, the beat display and the
 click scheduling are all exercised as they run. The session is driven through what a player can
