@@ -98,6 +98,33 @@ what leaves one finger free to select on a phone. A click puts the cursor down. 
 plays and stops — the selected stretch round and round, or the rest of the recording from
 the cursor — and `Esc` stops, then clears the loop.
 
+### The click over it
+
+Tick **Click over the loop** and say how many **beats** are in the stretch you selected. The
+tempo is not typed and not tapped — it is division, `beats × 60 / length`, shown rather than
+edited. Counting the beats of a phrase you have just dragged out is something a musician does
+without thinking; naming its BPM is not. The time signature decides only where the accents
+fall and whether the pulse gets extra clicks; it does not have to divide the loop, so a
+seven-beat loop in 4/4 is a thing you can ask for.
+
+That division is also why the click does not drift. Its period is exactly the length of the
+loop over the beats in it, so it divides the loop without remainder; the recording and the
+click are started from **one reading of the audio clock**; and so the downbeat lands on the
+seam on the first pass and on the thousandth. Nothing re-synchronises, because nothing goes
+out of step — the test for it runs the pair for two minutes and looks for a click on every
+seam.
+
+**Click level** moves the click against the recording. The recording is the reference and
+stays where it is, which is the adjustment that is actually wanted: a click that cuts through
+a loud recording, or gets out of the way of a quiet one. It takes effect where it stands,
+without restarting the sound; changing the beats or the meter does restart it, because a new
+grid has to land back on the seam.
+
+Without a selection the panel is off. That is not a gap: practising to a click with no
+recording is what the setup form and the session screen are for.
+
+### Why the seam does not click
+
 The seam of a loop is a **crossfade**, not a cut. A looping `AudioBufferSourceNode` leaves
 no gap in time but leaves one in amplitude, and a step in a waveform is a click; heard every
 four seconds for twenty minutes it is the reason the practice stops. So each pass is
@@ -114,9 +141,9 @@ recording will need.
 
 | folder                | what lives there                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `model/`              | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`), plus what identifies a recording (`recording.ts`) and a stretch of one (`selection.ts`). Pure.                                                                                                                                                                                              |
+| `model/`              | music itself: note values (`notes.ts`), time signatures and their accent patterns (`meter.ts`), the tempo a stretch of music implies (`tempo.ts`), plus what identifies a recording (`recording.ts`) and a stretch of one (`selection.ts`). Pure.                                                                                                                                           |
 | `practice/`           | the method: the rotation and the tempo ladder (`sequence.ts`), the stage/rung cursor behind the four move buttons (`session.ts`), setup defaults, clamping and `localStorage` (`settings.ts`). Pure — no DOM, no Web Audio.                                                                                                                                                                 |
-| `audio/`              | the one `AudioContext` and the gesture that unlocks it (`engine.ts`), the lookahead scheduler that clicks on its clock (`metronome.ts`), the recording read into memory (`recording.ts`) and the looping player with the crossfaded seam (`player.ts`). Knows nothing of the method.                                                                                                        |
+| `audio/`              | the one `AudioContext`, the gesture that unlocks it, the moment everything starts on and the bus the click is levelled on (`engine.ts`); the lookahead scheduler that clicks on that clock (`metronome.ts`); the recording read into memory (`recording.ts`) and the looping player with the crossfaded seam (`player.ts`). Knows nothing of the method.                                    |
 | `ui/`                 | the shared React pieces — buttons, fields, cards, a collapsible aside, the drawn note-value glyphs — each with its own stylesheet.                                                                                                                                                                                                                                                          |
 | `waveform/`           | the recording drawn on a canvas: the peak envelope (`peaks.ts`), the visible stretch and its arithmetic (`view.ts`), the painting (`draw.ts`), the gestures (`gestures.ts`) and the one component that owns them. Two marks on it mean different things — the cursor is where a play would begin, the playhead is where the sound is — and both are read once a frame rather than rendered. |
 | `screens/`            | whole screens, a folder each: `setup/` is the form, `session/` the practice session — the screen itself plus the segment map, the beat dots, the controls and the ladder it is drawn from — and `recording/`, where a file is opened, looped and played, reachable by address alone until it is worth linking to.                                                                           |
@@ -124,8 +151,9 @@ recording will need.
 | `app-harness.tsx`     | test-only, shipped to nobody: boots the whole app on a fake audio clock and reads it back the way a player does.                                                                                                                                                                                                                                                                            |
 | `code-rules/`         | the two tests that measure the tree itself rather than any one file — the layering and the sizes. They read the source through the file system and import none of it.                                                                                                                                                                                                                       |
 
-Everything that sounds is handed the same engine, so the click and the recording stand on
-one clock — which is the whole reason the loop keeps an exact period.
+Everything that sounds is handed the same engine, so the click and the recording stand on one
+clock and start on one moment of it — which is the whole reason the loop keeps an exact period
+and the click keeps its place in it.
 
 Tests sit beside what they test. `sequence.test.ts` and `session.test.ts` pin the method
 itself; `engine.test.ts`, `metronome.test.ts` and `player.test.ts` drive the audio against a fake
